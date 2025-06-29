@@ -1,10 +1,9 @@
 package sql_test
 
 import (
-	"strings"
 	"testing"
 
-	"github.com/rqlite/sql"
+	"github.com/TcMits/sql"
 )
 
 func TestScanner_Scan(t *testing.T) {
@@ -14,6 +13,8 @@ func TestScanner_Scan(t *testing.T) {
 		})
 		t.Run("Quoted", func(t *testing.T) {
 			AssertScan(t, `"crazy ~!#*&# column name"" foo"`, sql.QIDENT, `crazy ~!#*&# column name" foo`)
+			AssertScan(t, "`crazy ~!#*&# column name`` foo`", sql.QIDENT, "crazy ~!#*&# column name` foo")
+			AssertScan(t, `[crazy ~!#*&# column name"" foo]`, sql.QIDENT, `crazy ~!#*&# column name"" foo`)
 		})
 		t.Run("NoEndQuote", func(t *testing.T) {
 			AssertScan(t, `"unfinished`, sql.ILLEGAL, `"unfinished`)
@@ -198,7 +199,8 @@ func TestScanner_Scan(t *testing.T) {
 // AssertScan asserts the value of the first scan to s.
 func AssertScan(tb testing.TB, s string, expectedTok sql.Token, expectedLit string) {
 	tb.Helper()
-	_, tok, lit := sql.NewScanner(strings.NewReader(s)).Scan()
+	scanner := sql.NewScanner(s)
+	_, tok, lit := scanner.Scan()
 	if tok != expectedTok || lit != expectedLit {
 		tb.Fatalf("Scan(%q)=<%s,%s>, want <%s,%s>", s, tok, lit, expectedTok, expectedLit)
 	}
@@ -206,8 +208,8 @@ func AssertScan(tb testing.TB, s string, expectedTok sql.Token, expectedLit stri
 
 func Benchmark_NewScanner(b *testing.B) {
 	s := `SELECT * FROM foo WHERE bar = 1`
-	for i := 0; i < b.N; i++ {
-		scanner := sql.NewScanner(strings.NewReader(s))
+	for b.Loop() {
+		scanner := sql.NewScanner(s)
 		for {
 			_, tok, lit := scanner.Scan()
 			if tok == sql.EOF {
@@ -216,6 +218,34 @@ func Benchmark_NewScanner(b *testing.B) {
 			if tok == sql.ILLEGAL {
 				b.Fatalf("Unexpected ILLEGAL token: %s", lit)
 			}
+		}
+	}
+}
+
+func Benchmark_NewParser_Simple(b *testing.B) {
+	s := `SELECT * FROM foo WHERE bar = 1`
+	for b.Loop() {
+		_, err := sql.ParseStmtString(s)
+		if err != nil {
+			b.Fatal(err)
+		}
+	}
+}
+
+func Benchmark_NewParser_Hard(b *testing.B) {
+	s := `WITH derived AS (
+		SELECT MAX(a) AS max_a,
+					 COUNT(b) AS b_num,
+					 user_id
+		FROM table_name
+		GROUP BY user_id
+)
+SELECT * FROM table_name
+LEFT JOIN derived USING (user_id)`
+	for b.Loop() {
+		_, err := sql.ParseStmtString(s)
+		if err != nil {
+			b.Fatal(err)
 		}
 	}
 }

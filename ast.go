@@ -1,91 +1,101 @@
 package sql
 
 import (
-	"bytes"
 	"fmt"
 	"strings"
 )
 
 type Node interface {
-	node()
+	node() bool                          // return true if valid node
+	subnodes(yield func(Node) bool) bool // yields all subnodes of the node
+
 	fmt.Stringer
 }
 
-func (*AlterTableStatement) node()         {}
-func (*AnalyzeStatement) node()            {}
-func (*Assignment) node()                  {}
-func (*BeginStatement) node()              {}
-func (*BinaryExpr) node()                  {}
-func (*BindExpr) node()                    {}
-func (*BlobLit) node()                     {}
-func (*BoolLit) node()                     {}
-func (*Call) node()                        {}
-func (*CaseBlock) node()                   {}
-func (*CaseExpr) node()                    {}
-func (*CastExpr) node()                    {}
-func (*CheckConstraint) node()             {}
-func (*CollateConstraint) node()           {}
-func (*ColumnDefinition) node()            {}
-func (*CommitStatement) node()             {}
-func (*CreateIndexStatement) node()        {}
-func (*CreateTableStatement) node()        {}
-func (*CreateTriggerStatement) node()      {}
-func (*CreateViewStatement) node()         {}
-func (*CreateVirtualTableStatement) node() {}
-func (*DefaultConstraint) node()           {}
-func (*DeleteStatement) node()             {}
-func (*DropIndexStatement) node()          {}
-func (*DropTableStatement) node()          {}
-func (*DropTriggerStatement) node()        {}
-func (*DropViewStatement) node()           {}
-func (*Exists) node()                      {}
-func (*ExplainStatement) node()            {}
-func (*ExprList) node()                    {}
-func (*FilterClause) node()                {}
-func (*ForeignKeyArg) node()               {}
-func (*ForeignKeyConstraint) node()        {}
-func (*FrameSpec) node()                   {}
-func (*GeneratedConstraint) node()         {}
-func (*Ident) node()                       {}
-func (*IndexedColumn) node()               {}
-func (*InsertStatement) node()             {}
-func (*JoinClause) node()                  {}
-func (*JoinOperator) node()                {}
-func (*ModuleArgument) node()              {}
-func (*NotNullConstraint) node()           {}
-func (*Null) node()                        {}
-func (*NullLit) node()                     {}
-func (*NumberLit) node()                   {}
-func (*OnConstraint) node()                {}
-func (*OrderingTerm) node()                {}
-func (*OverClause) node()                  {}
-func (*ParenExpr) node()                   {}
-func (*ParenSource) node()                 {}
-func (*PragmaStatement) node()             {}
-func (*PrimaryKeyConstraint) node()        {}
-func (*QualifiedRef) node()                {}
-func (*QualifiedTableName) node()          {}
-func (*QualifiedTableFunctionName) node()  {}
-func (*Raise) node()                       {}
-func (*Range) node()                       {}
-func (*ReindexStatement) node()            {}
-func (*ReleaseStatement) node()            {}
-func (*ResultColumn) node()                {}
-func (*ReturningClause) node()             {}
-func (*RollbackStatement) node()           {}
-func (*SavepointStatement) node()          {}
-func (*SelectStatement) node()             {}
-func (*StringLit) node()                   {}
-func (*TimestampLit) node()                {}
-func (*Type) node()                        {}
-func (*UnaryExpr) node()                   {}
-func (*UniqueConstraint) node()            {}
-func (*UpdateStatement) node()             {}
-func (*UpsertClause) node()                {}
-func (*UsingConstraint) node()             {}
-func (*Window) node()                      {}
-func (*WindowDefinition) node()            {}
-func (*WithClause) node()                  {}
+// statement nodes
+func (s *AlterTableStatement) node() bool         { return s != nil }
+func (s *AnalyzeStatement) node() bool            { return s != nil }
+func (s *BeginStatement) node() bool              { return s != nil }
+func (s *CommitStatement) node() bool             { return s != nil }
+func (s *CreateIndexStatement) node() bool        { return s != nil }
+func (s *CreateTableStatement) node() bool        { return s != nil }
+func (s *CreateTriggerStatement) node() bool      { return s != nil }
+func (s *CreateViewStatement) node() bool         { return s != nil }
+func (s *CreateVirtualTableStatement) node() bool { return s != nil }
+func (s *DeleteStatement) node() bool             { return s != nil }
+func (s *DropIndexStatement) node() bool          { return s != nil }
+func (s *DropTableStatement) node() bool          { return s != nil }
+func (s *DropTriggerStatement) node() bool        { return s != nil }
+func (s *DropViewStatement) node() bool           { return s != nil }
+func (s *ExplainStatement) node() bool            { return s != nil }
+func (s *InsertStatement) node() bool             { return s != nil }
+func (s *PragmaStatement) node() bool             { return s != nil }
+func (s *ReindexStatement) node() bool            { return s != nil }
+func (s *ReleaseStatement) node() bool            { return s != nil }
+func (s *RollbackStatement) node() bool           { return s != nil }
+func (s *SavepointStatement) node() bool          { return s != nil }
+func (s *SelectStatement) node() bool             { return s != nil }
+func (s *UpdateStatement) node() bool             { return s != nil }
+func (s *AttachStatement) node() bool             { return s != nil }
+func (s *DetachStatement) node() bool             { return s != nil }
+func (s *VacuumStatement) node() bool             { return s != nil }
+
+// exprs
+func (s *UnaryExpr) node() bool     { return s != nil }
+func (s *BinaryExpr) node() bool    { return s != nil }
+func (s *BindExpr) node() bool      { return s != nil }
+func (s *BlobLit) node() bool       { return s != nil }
+func (s *BoolLit) node() bool       { return s != nil }
+func (s *Call) node() bool          { return s != nil }
+func (s *CaseExpr) node() bool      { return s != nil }
+func (s *CastExpr) node() bool      { return s != nil }
+func (s *Exists) node() bool        { return s != nil }
+func (s *Null) node() bool          { return s != nil }
+func (s *ExprList) node() bool      { return s != nil }
+func (s *Ident) node() bool         { return s != nil }
+func (s *NullLit) node() bool       { return s != nil }
+func (s *NumberLit) node() bool     { return s != nil }
+func (s *QualifiedRef) node() bool  { return s != nil }
+func (s *Raise) node() bool         { return s != nil }
+func (s *StringLit) node() bool     { return s != nil }
+func (s *TimestampLit) node() bool  { return s != nil }
+func (s *InExpr) node() bool        { return s != nil }
+func (s *ParenExpr) node() bool     { return s != nil }
+func (s *JoinClause) node() bool    { return s != nil }
+func (s *ParenSource) node() bool   { return s != nil }
+func (s *QualifiedName) node() bool { return s != nil }
+
+// constraints
+func (s *OnConstraint) node() bool         { return s != nil }
+func (s *UsingConstraint) node() bool      { return s != nil }
+func (s *PrimaryKeyConstraint) node() bool { return s != nil }
+func (s *NotNullConstraint) node() bool    { return s != nil }
+func (s *UniqueConstraint) node() bool     { return s != nil }
+func (s *CheckConstraint) node() bool      { return s != nil }
+func (s *DefaultConstraint) node() bool    { return s != nil }
+func (s *GeneratedConstraint) node() bool  { return s != nil }
+func (s *CollateConstraint) node() bool    { return s != nil }
+func (s *ForeignKeyConstraint) node() bool { return s != nil }
+
+// inner clauses
+func (s *ColumnDefinition) node() bool { return s != nil }
+func (s *Type) node() bool             { return s != nil }
+func (s *ConflictClause) node() bool   { return s != nil }
+func (s *IndexedColumn) node() bool    { return s != nil }
+func (s *ForeignKeyArg) node() bool    { return s != nil }
+func (s *ModuleArgument) node() bool   { return s != nil }
+func (s *CaseBlock) node() bool        { return s != nil }
+func (s *WindowDefinition) node() bool { return s != nil }
+func (s *WithClause) node() bool       { return s != nil }
+func (s *UpsertClause) node() bool     { return s != nil }
+func (s *ResultColumn) node() bool     { return s != nil }
+func (s *Assignment) node() bool       { return s != nil }
+func (s *OrderingTerm) node() bool     { return s != nil }
+func (s *Window) node() bool           { return s != nil }
+func (s *FunctionArg) node() bool      { return s != nil }
+func (s *JoinOperator) node() bool     { return s != nil }
+func (s *CTE) node() bool              { return s != nil }
+func (s *FrameSpec) node() bool        { return s != nil }
 
 type Statement interface {
 	Node
@@ -115,226 +125,36 @@ func (*RollbackStatement) stmt()           {}
 func (*SavepointStatement) stmt()          {}
 func (*SelectStatement) stmt()             {}
 func (*UpdateStatement) stmt()             {}
-
-// CloneStatement returns a deep copy stmt.
-func CloneStatement(stmt Statement) Statement {
-	if stmt == nil {
-		return nil
-	}
-
-	switch stmt := stmt.(type) {
-	case *AlterTableStatement:
-		return stmt.Clone()
-	case *AnalyzeStatement:
-		return stmt.Clone()
-	case *BeginStatement:
-		return stmt.Clone()
-	case *CommitStatement:
-		return stmt.Clone()
-	case *CreateIndexStatement:
-		return stmt.Clone()
-	case *CreateTableStatement:
-		return stmt.Clone()
-	case *CreateTriggerStatement:
-		return stmt.Clone()
-	case *CreateViewStatement:
-		return stmt.Clone()
-	case *CreateVirtualTableStatement:
-		return stmt.Clone()
-	case *DeleteStatement:
-		return stmt.Clone()
-	case *DropIndexStatement:
-		return stmt.Clone()
-	case *DropTableStatement:
-		return stmt.Clone()
-	case *DropTriggerStatement:
-		return stmt.Clone()
-	case *DropViewStatement:
-		return stmt.Clone()
-	case *ExplainStatement:
-		return stmt.Clone()
-	case *PragmaStatement:
-		return stmt.Clone()
-	case *InsertStatement:
-		return stmt.Clone()
-	case *ReindexStatement:
-		return stmt.Clone()
-	case *ReleaseStatement:
-		return stmt.Clone()
-	case *RollbackStatement:
-		return stmt.Clone()
-	case *SavepointStatement:
-		return stmt.Clone()
-	case *SelectStatement:
-		return stmt.Clone()
-	case *UpdateStatement:
-		return stmt.Clone()
-	default:
-		panic(fmt.Sprintf("invalid statement type: %T", stmt))
-	}
-}
-
-func cloneStatements(a []Statement) []Statement {
-	if a == nil {
-		return nil
-	}
-	other := make([]Statement, len(a))
-	for i := range a {
-		other[i] = CloneStatement(a[i])
-	}
-	return other
-}
-
-// StatementSource returns the root statement for a statement.
-func StatementSource(stmt Statement) Source {
-	switch stmt := stmt.(type) {
-	case *SelectStatement:
-		return stmt.Source
-	case *UpdateStatement:
-		return stmt.Table
-	case *DeleteStatement:
-		return stmt.Table
-	default:
-		return nil
-	}
-}
+func (*AttachStatement) stmt()             {}
+func (*DetachStatement) stmt()             {}
+func (*VacuumStatement) stmt()             {}
 
 type Expr interface {
 	Node
 	expr()
 }
 
-func (*BinaryExpr) expr()   {}
-func (*BindExpr) expr()     {}
-func (*BlobLit) expr()      {}
-func (*BoolLit) expr()      {}
-func (*Call) expr()         {}
-func (*CaseExpr) expr()     {}
-func (*CastExpr) expr()     {}
-func (*Exists) expr()       {}
-func (*Null) expr()         {}
-func (*ExprList) expr()     {}
-func (*Ident) expr()        {}
-func (*NullLit) expr()      {}
-func (*NumberLit) expr()    {}
-func (*ParenExpr) expr()    {}
-func (*QualifiedRef) expr() {}
-func (*Raise) expr()        {}
-func (*Range) expr()        {}
-func (*StringLit) expr()    {}
-func (*TimestampLit) expr() {}
-func (*UnaryExpr) expr()    {}
-func (SelectExpr) expr()    {}
-
-// CloneExpr returns a deep copy expr.
-func CloneExpr(expr Expr) Expr {
-	if expr == nil {
-		return nil
-	}
-
-	switch expr := expr.(type) {
-	case *BinaryExpr:
-		return expr.Clone()
-	case *BindExpr:
-		return expr.Clone()
-	case *BlobLit:
-		return expr.Clone()
-	case *BoolLit:
-		return expr.Clone()
-	case *Call:
-		return expr.Clone()
-	case *CaseExpr:
-		return expr.Clone()
-	case *CastExpr:
-		return expr.Clone()
-	case *Exists:
-		return expr.Clone()
-	case *Null:
-		return expr.Clone()
-	case *ExprList:
-		return expr.Clone()
-	case *Ident:
-		return expr.Clone()
-	case *NullLit:
-		return expr.Clone()
-	case *NumberLit:
-		return expr.Clone()
-	case *ParenExpr:
-		return expr.Clone()
-	case *QualifiedRef:
-		return expr.Clone()
-	case *Raise:
-		return expr.Clone()
-	case *Range:
-		return expr.Clone()
-	case *StringLit:
-		return expr.Clone()
-	case *TimestampLit:
-		return expr.Clone()
-	case *UnaryExpr:
-		return expr.Clone()
-	case SelectExpr:
-		return expr.Clone()
-	default:
-		panic(fmt.Sprintf("invalid expr type: %T", expr))
-	}
-}
-
-func cloneExprs(a []Expr) []Expr {
-	if a == nil {
-		return nil
-	}
-	other := make([]Expr, len(a))
-	for i := range a {
-		other[i] = CloneExpr(a[i])
-	}
-	return other
-}
-
-// ExprString returns the string representation of expr.
-// Returns a blank string if expr is nil.
-func ExprString(expr Expr) string {
-	if expr == nil {
-		return ""
-	}
-	return expr.String()
-}
-
-// SplitExprTree splits apart expr so it is a list of all AND joined expressions.
-// For example, the expression "A AND B AND (C OR (D AND E))" would be split into
-// a list of "A", "B", "C OR (D AND E)".
-func SplitExprTree(expr Expr) []Expr {
-	if expr == nil {
-		return nil
-	}
-
-	var a []Expr
-	splitExprTree(expr, &a)
-	return a
-}
-
-func splitExprTree(expr Expr, a *[]Expr) {
-	switch expr := expr.(type) {
-	case *BinaryExpr:
-		if expr.Op != AND {
-			*a = append(*a, expr)
-			return
-		}
-		splitExprTree(expr.X, a)
-		splitExprTree(expr.Y, a)
-	case *ParenExpr:
-		splitExprTree(expr.X, a)
-	default:
-		*a = append(*a, expr)
-	}
-}
-
-// Scope represents a context for name resolution.
-// Names can be resolved at the current source or in parent scopes.
-type Scope struct {
-	Parent *Scope
-	Source Source
-}
+func (*UnaryExpr) expr()       {}
+func (*BinaryExpr) expr()      {}
+func (*BindExpr) expr()        {}
+func (*BlobLit) expr()         {}
+func (*BoolLit) expr()         {}
+func (*Call) expr()            {}
+func (*CaseExpr) expr()        {}
+func (*CastExpr) expr()        {}
+func (*Exists) expr()          {}
+func (*Null) expr()            {}
+func (*ExprList) expr()        {}
+func (*Ident) expr()           {}
+func (*NullLit) expr()         {}
+func (*NumberLit) expr()       {}
+func (*QualifiedRef) expr()    {}
+func (*Raise) expr()           {}
+func (*StringLit) expr()       {}
+func (*TimestampLit) expr()    {}
+func (*SelectStatement) expr() {}
+func (*InExpr) expr()          {}
+func (*ParenExpr) expr()       {}
 
 // Source represents a table or subquery.
 type Source interface {
@@ -342,104 +162,10 @@ type Source interface {
 	source()
 }
 
-func (*JoinClause) source()                 {}
-func (*ParenSource) source()                {}
-func (*QualifiedTableName) source()         {}
-func (*QualifiedTableFunctionName) source() {}
-func (*SelectStatement) source()            {}
-
-// CloneSource returns a deep copy src.
-func CloneSource(src Source) Source {
-	if src == nil {
-		return nil
-	}
-
-	switch src := src.(type) {
-	case *JoinClause:
-		return src.Clone()
-	case *ParenSource:
-		return src.Clone()
-	case *QualifiedTableName:
-		return src.Clone()
-	case *QualifiedTableFunctionName:
-		return src.Clone()
-	case *SelectStatement:
-		return src.Clone()
-	default:
-		panic(fmt.Sprintf("invalid source type: %T", src))
-	}
-}
-
-// SourceName returns the name of the source.
-// Only returns for QualifiedTableName & ParenSource.
-func SourceName(src Source) string {
-	switch src := src.(type) {
-	case *JoinClause, *SelectStatement:
-		return ""
-	case *ParenSource:
-		return IdentName(src.Alias)
-	case *QualifiedTableName:
-		return src.TableName()
-	default:
-		return ""
-	}
-}
-
-// SourceList returns a list of scopes in the current scope.
-func SourceList(src Source) []Source {
-	var a []Source
-	ForEachSource(src, func(s Source) bool {
-		a = append(a, s)
-		return true
-	})
-	return a
-}
-
-// ForEachSource calls fn for every source within the current scope.
-// Stops iteration if fn returns false.
-func ForEachSource(src Source, fn func(Source) bool) {
-	forEachSource(src, fn)
-}
-
-func forEachSource(src Source, fn func(Source) bool) bool {
-	if !fn(src) {
-		return false
-	}
-
-	switch src := src.(type) {
-	case *JoinClause:
-		if !forEachSource(src.X, fn) {
-			return false
-		} else if !forEachSource(src.Y, fn) {
-			return false
-		}
-	case *SelectStatement:
-		if !forEachSource(src.Source, fn) {
-			return false
-		}
-	}
-	return true
-}
-
-// ResolveSource returns a source with the given name.
-// This can either be the table name or the alias for a source.
-func ResolveSource(root Source, name string) Source {
-	var ret Source
-	ForEachSource(root, func(src Source) bool {
-		switch src := src.(type) {
-		case *ParenSource:
-			if IdentName(src.Alias) == name {
-				ret = src
-			}
-		case *QualifiedTableName:
-			if src.TableName() == name {
-				ret = src
-			}
-		}
-		return ret == nil // continue until we find the matching source
-	})
-	return ret
-}
+func (*JoinClause) source()      {}
+func (*ParenSource) source()     {}
+func (*QualifiedName) source()   {}
+func (*SelectStatement) source() {}
 
 // JoinConstraint represents either an ON or USING join constraint.
 type JoinConstraint interface {
@@ -450,44 +176,35 @@ type JoinConstraint interface {
 func (*OnConstraint) joinConstraint()    {}
 func (*UsingConstraint) joinConstraint() {}
 
-// CloneJoinConstraint returns a deep copy cons.
-func CloneJoinConstraint(cons JoinConstraint) JoinConstraint {
-	if cons == nil {
-		return nil
-	}
-
-	switch cons := cons.(type) {
-	case *OnConstraint:
-		return cons.Clone()
-	case *UsingConstraint:
-		return cons.Clone()
-	default:
-		panic(fmt.Sprintf("invalid join constraint type: %T", cons))
-	}
+type Constraint interface {
+	Node
+	constraint()
 }
 
+func (*PrimaryKeyConstraint) constraint() {}
+func (*NotNullConstraint) constraint()    {}
+func (*UniqueConstraint) constraint()     {}
+func (*CheckConstraint) constraint()      {}
+func (*DefaultConstraint) constraint()    {}
+func (*GeneratedConstraint) constraint()  {}
+func (*CollateConstraint) constraint()    {}
+func (*ForeignKeyConstraint) constraint() {}
+
 type ExplainStatement struct {
-	Explain   Pos       // position of EXPLAIN
-	Query     Pos       // position of QUERY (optional)
-	QueryPlan Pos       // position of PLAN after QUERY (optional)
+	Explain   bool
+	QueryPlan bool
 	Stmt      Statement // target statement
 }
 
-// Clone returns a deep copy of s.
-func (s *ExplainStatement) Clone() *ExplainStatement {
-	if s == nil {
-		return nil
-	}
-	other := *s
-	other.Stmt = CloneStatement(s.Stmt)
-	return &other
+func (s *ExplainStatement) subnodes(yield func(Node) bool) bool {
+	return yieldNodes(yield, s.Stmt)
 }
 
 // String returns the string representation of the statement.
 func (s *ExplainStatement) String() string {
-	var buf bytes.Buffer
+	var buf strings.Builder
 	buf.WriteString("EXPLAIN")
-	if s.QueryPlan.IsValid() {
+	if s.QueryPlan {
 		buf.WriteString(" QUERY PLAN")
 	}
 	fmt.Fprintf(&buf, " %s", s.Stmt.String())
@@ -495,118 +212,69 @@ func (s *ExplainStatement) String() string {
 }
 
 type BeginStatement struct {
-	Begin       Pos // position of BEGIN
-	Deferred    Pos // position of DEFERRED keyword
-	Immediate   Pos // position of IMMEDIATE keyword
-	Exclusive   Pos // position of EXCLUSIVE keyword
-	Transaction Pos // position of TRANSACTION keyword  (optional)
+	Deferred  bool
+	Immediate bool
+	Exclusive bool
 }
 
-// Clone returns a deep copy of s.
-func (s *BeginStatement) Clone() *BeginStatement {
-	if s == nil {
-		return nil
-	}
-	other := *s
-	return &other
+func (s *BeginStatement) subnodes(yield func(Node) bool) bool {
+	return true
 }
 
 // String returns the string representation of the statement.
 func (s *BeginStatement) String() string {
-	var buf bytes.Buffer
+	var buf strings.Builder
 	buf.WriteString("BEGIN")
-	if s.Deferred.IsValid() {
+	if s.Deferred {
 		buf.WriteString(" DEFERRED")
-	} else if s.Immediate.IsValid() {
+	} else if s.Immediate {
 		buf.WriteString(" IMMEDIATE")
-	} else if s.Exclusive.IsValid() {
+	} else if s.Exclusive {
 		buf.WriteString(" EXCLUSIVE")
 	}
-	if s.Transaction.IsValid() {
-		buf.WriteString(" TRANSACTION")
-	}
+
 	return buf.String()
 }
 
-type CommitStatement struct {
-	Commit      Pos // position of COMMIT keyword
-	End         Pos // position of END keyword
-	Transaction Pos // position of TRANSACTION keyword  (optional)
-}
+type CommitStatement struct{}
 
-// Clone returns a deep copy of s.
-func (s *CommitStatement) Clone() *CommitStatement {
-	if s == nil {
-		return nil
-	}
-	other := *s
-	return &other
+func (s *CommitStatement) subnodes(yield func(Node) bool) bool {
+	return true
 }
 
 // String returns the string representation of the statement.
 func (s *CommitStatement) String() string {
-	var buf bytes.Buffer
-	if s.End.IsValid() {
-		buf.WriteString("END")
-	} else {
-		buf.WriteString("COMMIT")
-	}
-
-	if s.Transaction.IsValid() {
-		buf.WriteString(" TRANSACTION")
-	}
+	var buf strings.Builder
+	buf.WriteString("COMMIT")
 	return buf.String()
 }
 
 type RollbackStatement struct {
-	Rollback      Pos    // position of ROLLBACK keyword
-	Transaction   Pos    // position of TRANSACTION keyword  (optional)
-	To            Pos    // position of TO keyword  (optional)
-	Savepoint     Pos    // position of SAVEPOINT keyword  (optional)
 	SavepointName *Ident // name of savepoint
 }
 
-// Clone returns a deep copy of s.
-func (s *RollbackStatement) Clone() *RollbackStatement {
-	if s == nil {
-		return s
-	}
-	other := *s
-	other.SavepointName = s.SavepointName.Clone()
-	return &other
+func (s *RollbackStatement) subnodes(yield func(Node) bool) bool {
+	return yieldNodes(yield, s.SavepointName)
 }
 
 // String returns the string representation of the statement.
 func (s *RollbackStatement) String() string {
-	var buf bytes.Buffer
+	var buf strings.Builder
 	buf.WriteString("ROLLBACK")
-	if s.Transaction.IsValid() {
-		buf.WriteString(" TRANSACTION")
-	}
 
 	if s.SavepointName != nil {
-		buf.WriteString(" TO")
-		if s.Savepoint.IsValid() {
-			buf.WriteString(" SAVEPOINT")
-		}
-		fmt.Fprintf(&buf, " %s", s.SavepointName.String())
+		buf.WriteString(" TO ")
+		buf.WriteString(s.SavepointName.String())
 	}
 	return buf.String()
 }
 
 type SavepointStatement struct {
-	Savepoint Pos    // position of SAVEPOINT keyword
-	Name      *Ident // name of savepoint
+	Name *Ident // name of savepoint
 }
 
-// Clone returns a deep copy of s.
-func (s *SavepointStatement) Clone() *SavepointStatement {
-	if s == nil {
-		return s
-	}
-	other := *s
-	other.Name = s.Name.Clone()
-	return &other
+func (s *SavepointStatement) subnodes(yield func(Node) bool) bool {
+	return yieldNodes(yield, s.Name)
 }
 
 // String returns the string representation of the statement.
@@ -615,80 +283,67 @@ func (s *SavepointStatement) String() string {
 }
 
 type ReleaseStatement struct {
-	Release   Pos    // position of RELEASE keyword
-	Savepoint Pos    // position of SAVEPOINT keyword (optional)
-	Name      *Ident // name of savepoint
+	Name *Ident // name of savepoint
 }
 
-// Clone returns a deep copy of s.
-func (s *ReleaseStatement) Clone() *ReleaseStatement {
-	if s == nil {
-		return s
-	}
-	other := *s
-	other.Name = s.Name.Clone()
-	return &other
+func (s *ReleaseStatement) subnodes(yield func(Node) bool) bool {
+	return yieldNodes(yield, s.Name)
 }
 
 // String returns the string representation of the statement.
 func (s *ReleaseStatement) String() string {
-	var buf bytes.Buffer
-	buf.WriteString("RELEASE")
-	if s.Savepoint.IsValid() {
-		buf.WriteString(" SAVEPOINT")
-	}
-	fmt.Fprintf(&buf, " %s", s.Name.String())
+	var buf strings.Builder
+	buf.WriteString("RELEASE ")
+	buf.WriteString(s.Name.String())
 	return buf.String()
 }
 
 type CreateTableStatement struct {
-	Create      Pos    // position of CREATE keyword
-	Table       Pos    // position of CREATE keyword
-	If          Pos    // position of IF keyword (optional)
-	IfNot       Pos    // position of NOT keyword (optional)
-	IfNotExists Pos    // position of EXISTS keyword (optional)
-	Schema      *Ident // optional schema name
-	Name        *Ident // table name
-
-	Lparen      Pos                 // position of left paren of column list
-	Columns     []*ColumnDefinition // column definitions
-	Constraints []Constraint        // table constraints
-	Rparen      Pos                 // position of right paren of column list
-
-	Without Pos // position of WITHOUT keyword (optional)
-	Rowid   Pos // position of ROWID keyword (optional)
-	Strict  Pos // position of STRICT keyword (optional)
-
-	As     Pos              // position of AS keyword (optional)
-	Select *SelectStatement // select stmt to build from
+	Temp         bool
+	IfNotExists  bool
+	Name         *QualifiedName      // table name
+	Columns      []*ColumnDefinition // column definitions
+	Constraints  []Constraint        // table constraints
+	WithoutRowID bool
+	Strict       bool
+	Select       *SelectStatement // select stmt to build from
 }
 
-// Clone returns a deep copy of s.
-func (s *CreateTableStatement) Clone() *CreateTableStatement {
-	if s == nil {
-		return s
+func (s *CreateTableStatement) subnodes(yield func(Node) bool) bool {
+	if !yieldNodes(yield, s.Name) {
+		return false
 	}
-	other := *s
-	other.Schema = s.Schema.Clone()
-	other.Name = s.Name.Clone()
-	other.Columns = cloneColumnDefinitions(s.Columns)
-	other.Constraints = cloneConstraints(s.Constraints)
-	other.Select = s.Select.Clone()
-	return &other
+
+	for _, col := range s.Columns {
+		if !yieldNodes(yield, col) {
+			return false
+		}
+	}
+
+	for _, col := range s.Constraints {
+		if !yieldNodes(yield, col) {
+			return false
+		}
+	}
+
+	return yieldNodes(yield, s.Select)
 }
 
 // String returns the string representation of the statement.
 func (s *CreateTableStatement) String() string {
-	var buf bytes.Buffer
-	buf.WriteString("CREATE TABLE")
-	if s.IfNotExists.IsValid() {
-		buf.WriteString(" IF NOT EXISTS")
+	var buf strings.Builder
+	buf.WriteString("CREATE ")
+
+	if s.Temp {
+		buf.WriteString("TEMP ")
 	}
-	buf.WriteString(" ")
-	if s.Schema != nil {
-		buf.WriteString(s.Schema.String())
-		buf.WriteString(".")
+
+	buf.WriteString("TABLE ")
+
+	if s.IfNotExists {
+		buf.WriteString("IF NOT EXISTS ")
 	}
+
 	buf.WriteString(s.Name.String())
 
 	if s.Select != nil {
@@ -718,32 +373,27 @@ type ColumnDefinition struct {
 	Constraints []Constraint // column constraints
 }
 
-// Clone returns a deep copy of d.
-func (d *ColumnDefinition) Clone() *ColumnDefinition {
-	if d == nil {
-		return d
+func (c *ColumnDefinition) subnodes(yield func(Node) bool) bool {
+	if !yieldNodes(yield, c.Name) {
+		return false
 	}
-	other := *d
-	other.Name = d.Name.Clone()
-	other.Type = d.Type.Clone()
-	other.Constraints = cloneConstraints(d.Constraints)
-	return &other
-}
 
-func cloneColumnDefinitions(a []*ColumnDefinition) []*ColumnDefinition {
-	if a == nil {
-		return nil
+	if !yieldNodes(yield, c.Type) {
+		return false
 	}
-	other := make([]*ColumnDefinition, len(a))
-	for i := range a {
-		other[i] = a[i].Clone()
+
+	for _, constraint := range c.Constraints {
+		if !yieldNodes(yield, constraint) {
+			return false
+		}
 	}
-	return other
+
+	return true
 }
 
 // String returns the string representation of the statement.
 func (c *ColumnDefinition) String() string {
-	var buf bytes.Buffer
+	var buf strings.Builder
 	buf.WriteString(c.Name.String())
 	if c.Type != nil {
 		buf.WriteString(" ")
@@ -756,86 +406,36 @@ func (c *ColumnDefinition) String() string {
 	return buf.String()
 }
 
-type Constraint interface {
-	Node
-	constraint()
-}
-
-func (*PrimaryKeyConstraint) constraint() {}
-func (*NotNullConstraint) constraint()    {}
-func (*UniqueConstraint) constraint()     {}
-func (*CheckConstraint) constraint()      {}
-func (*DefaultConstraint) constraint()    {}
-func (*GeneratedConstraint) constraint()  {}
-func (*CollateConstraint) constraint()    {}
-func (*ForeignKeyConstraint) constraint() {}
-
-// CloneConstraint returns a deep copy cons.
-func CloneConstraint(cons Constraint) Constraint {
-	if cons == nil {
-		return nil
-	}
-
-	switch cons := cons.(type) {
-	case *PrimaryKeyConstraint:
-		return cons.Clone()
-	case *NotNullConstraint:
-		return cons.Clone()
-	case *UniqueConstraint:
-		return cons.Clone()
-	case *CheckConstraint:
-		return cons.Clone()
-	case *DefaultConstraint:
-		return cons.Clone()
-	case *GeneratedConstraint:
-		return cons.Clone()
-	case *CollateConstraint:
-		return cons.Clone()
-	case *ForeignKeyConstraint:
-		return cons.Clone()
-	default:
-		panic(fmt.Sprintf("invalid constraint type: %T", cons))
-	}
-}
-
-func cloneConstraints(a []Constraint) []Constraint {
-	if a == nil {
-		return nil
-	}
-	other := make([]Constraint, len(a))
-	for i := range a {
-		other[i] = CloneConstraint(a[i])
-	}
-	return other
-}
-
 type PrimaryKeyConstraint struct {
-	Constraint Pos    // position of CONSTRAINT keyword
-	Name       *Ident // constraint name
-	Primary    Pos    // position of PRIMARY keyword
-	Key        Pos    // position of KEY keyword
-
-	Lparen  Pos      // position of left paren (table only)
-	Columns []*Ident // indexed columns (table only)
-	Rparen  Pos      // position of right paren (table only)
-
-	Autoincrement Pos // position of AUTOINCREMENT keyword (column only)
+	Name          *Ident // constraint name (optional)
+	Asc           bool
+	Desc          bool
+	Conflict      *ConflictClause // conflict clause (optional)
+	Columns       []*Ident        // indexed columns (table only)
+	Autoincrement bool
 }
 
-// Clone returns a deep copy of c.
-func (c *PrimaryKeyConstraint) Clone() *PrimaryKeyConstraint {
-	if c == nil {
-		return c
+func (c *PrimaryKeyConstraint) subnodes(yield func(Node) bool) bool {
+	if !yieldNodes(yield, c.Name) {
+		return false
 	}
-	other := *c
-	other.Name = c.Name.Clone()
-	other.Columns = cloneIdents(c.Columns)
-	return &other
+
+	if !yieldNodes(yield, c.Conflict) {
+		return false
+	}
+
+	for _, col := range c.Columns {
+		if !yieldNodes(yield, col) {
+			return false
+		}
+	}
+
+	return true
 }
 
 // String returns the string representation of the constraint.
 func (c *PrimaryKeyConstraint) String() string {
-	var buf bytes.Buffer
+	var buf strings.Builder
 	if c.Name != nil {
 		buf.WriteString("CONSTRAINT ")
 		buf.WriteString(c.Name.String())
@@ -843,6 +443,17 @@ func (c *PrimaryKeyConstraint) String() string {
 	}
 
 	buf.WriteString("PRIMARY KEY")
+
+	if c.Asc {
+		buf.WriteString(" ASC")
+	} else if c.Desc {
+		buf.WriteString(" DESC")
+	}
+
+	if c.Conflict != nil {
+		buf.WriteString(" ")
+		buf.WriteString(c.Conflict.String())
+	}
 
 	if len(c.Columns) > 0 {
 		buf.WriteString(" (")
@@ -855,32 +466,32 @@ func (c *PrimaryKeyConstraint) String() string {
 		buf.WriteString(")")
 	}
 
-	if c.Autoincrement.IsValid() {
+	if c.Autoincrement {
 		buf.WriteString(" AUTOINCREMENT")
 	}
 	return buf.String()
 }
 
 type NotNullConstraint struct {
-	Constraint Pos    // position of CONSTRAINT keyword
-	Name       *Ident // constraint name
-	Not        Pos    // position of NOT keyword
-	Null       Pos    // position of NULL keyword
+	Name     *Ident          // constraint name (optional)
+	Conflict *ConflictClause // conflict clause (optional)
 }
 
-// Clone returns a deep copy of c.
-func (c *NotNullConstraint) Clone() *NotNullConstraint {
-	if c == nil {
-		return c
+func (c *NotNullConstraint) subnodes(yield func(Node) bool) bool {
+	if !yieldNodes(yield, c.Name) {
+		return false
 	}
-	other := *c
-	other.Name = c.Name.Clone()
-	return &other
+
+	if !yieldNodes(yield, c.Conflict) {
+		return false
+	}
+
+	return true
 }
 
 // String returns the string representation of the constraint.
 func (c *NotNullConstraint) String() string {
-	var buf bytes.Buffer
+	var buf strings.Builder
 	if c.Name != nil {
 		buf.WriteString("CONSTRAINT ")
 		buf.WriteString(c.Name.String())
@@ -889,37 +500,41 @@ func (c *NotNullConstraint) String() string {
 
 	buf.WriteString("NOT NULL")
 
+	if c.Conflict != nil {
+		buf.WriteString(" ")
+		buf.WriteString(c.Conflict.String())
+	}
+
 	return buf.String()
 }
 
 type UniqueConstraint struct {
-	Constraint Pos    // position of CONSTRAINT keyword
-	Name       *Ident // constraint name
-	Unique     Pos    // position of UNIQUE keyword
-
-	Lparen  Pos              // position of left paren (table only)
-	Columns []*IndexedColumn // indexed columns (table only)
-	Rparen  Pos              // position of right paren (table only)
+	Name     *Ident           // constraint name (optional)
+	Conflict *ConflictClause  // conflict clause (optional)
+	Columns  []*IndexedColumn // indexed columns (table only)
 }
 
-// Clone returns a deep copy of c.
-func (c *UniqueConstraint) Clone() *UniqueConstraint {
-	if c == nil {
-		return c
-	}
-	other := *c
-	other.Name = c.Name.Clone()
-	other.Columns = make([]*IndexedColumn, len(c.Columns))
-	for i := range c.Columns {
-		other.Columns[i] = c.Columns[i].Clone()
+func (c *UniqueConstraint) subnodes(yield func(Node) bool) bool {
+	if !yieldNodes(yield, c.Name) {
+		return false
 	}
 
-	return &other
+	if !yieldNodes(yield, c.Conflict) {
+		return false
+	}
+
+	for _, col := range c.Columns {
+		if !yieldNodes(yield, col) {
+			return false
+		}
+	}
+
+	return true
 }
 
 // String returns the string representation of the constraint.
 func (c *UniqueConstraint) String() string {
-	var buf bytes.Buffer
+	var buf strings.Builder
 	if c.Name != nil {
 		buf.WriteString("CONSTRAINT ")
 		buf.WriteString(c.Name.String())
@@ -927,6 +542,11 @@ func (c *UniqueConstraint) String() string {
 	}
 
 	buf.WriteString("UNIQUE")
+
+	if c.Conflict != nil {
+		buf.WriteString(" ")
+		buf.WriteString(c.Conflict.String())
+	}
 
 	if len(c.Columns) > 0 {
 		buf.WriteString(" (")
@@ -943,28 +563,17 @@ func (c *UniqueConstraint) String() string {
 }
 
 type CheckConstraint struct {
-	Constraint Pos    // position of CONSTRAINT keyword
-	Name       *Ident // constraint name
-	Check      Pos    // position of UNIQUE keyword
-	Lparen     Pos    // position of left paren
-	Expr       Expr   // check expression
-	Rparen     Pos    // position of right paren
+	Name *Ident // constraint name
+	Expr Expr   // check expression
 }
 
-// Clone returns a deep copy of c.
-func (c *CheckConstraint) Clone() *CheckConstraint {
-	if c == nil {
-		return c
-	}
-	other := *c
-	other.Name = c.Name.Clone()
-	other.Expr = CloneExpr(c.Expr)
-	return &other
+func (c *CheckConstraint) subnodes(yield func(Node) bool) bool {
+	return yieldNodes(yield, c.Name, c.Expr)
 }
 
 // String returns the string representation of the constraint.
 func (c *CheckConstraint) String() string {
-	var buf bytes.Buffer
+	var buf strings.Builder
 	if c.Name != nil {
 		buf.WriteString("CONSTRAINT ")
 		buf.WriteString(c.Name.String())
@@ -978,28 +587,17 @@ func (c *CheckConstraint) String() string {
 }
 
 type DefaultConstraint struct {
-	Constraint Pos    // position of CONSTRAINT keyword
-	Name       *Ident // constraint name
-	Default    Pos    // position of DEFAULT keyword
-	Lparen     Pos    // position of left paren
-	Expr       Expr   // default expression
-	Rparen     Pos    // position of right paren
+	Name *Ident // constraint name
+	Expr Expr   // default expression
 }
 
-// Clone returns a deep copy of c.
-func (c *DefaultConstraint) Clone() *DefaultConstraint {
-	if c == nil {
-		return c
-	}
-	other := *c
-	other.Name = c.Name.Clone()
-	other.Expr = CloneExpr(c.Expr)
-	return &other
+func (c *DefaultConstraint) subnodes(yield func(Node) bool) bool {
+	return yieldNodes(yield, c.Name, c.Expr)
 }
 
 // String returns the string representation of the constraint.
 func (c *DefaultConstraint) String() string {
-	var buf bytes.Buffer
+	var buf strings.Builder
 	if c.Name != nil {
 		buf.WriteString("CONSTRAINT ")
 		buf.WriteString(c.Name.String())
@@ -1007,61 +605,37 @@ func (c *DefaultConstraint) String() string {
 	}
 
 	buf.WriteString("DEFAULT ")
-
-	if c.Lparen.IsValid() {
-		buf.WriteString("(")
-		buf.WriteString(c.Expr.String())
-		buf.WriteString(")")
-	} else {
-		buf.WriteString(c.Expr.String())
-	}
+	buf.WriteString(c.Expr.String())
 	return buf.String()
 }
 
 type GeneratedConstraint struct {
-	Constraint Pos    // position of CONSTRAINT keyword
-	Name       *Ident // constraint name
-	Generated  Pos    // position of GENERATED keyword
-	Always     Pos    // position of ALWAYS keyword
-	As         Pos    // position of AS keyword
-	Lparen     Pos    // position of left paren
-	Expr       Expr   // default expression
-	Rparen     Pos    // position of right paren
-	Stored     Pos    // position of STORED keyword
-	Virtual    Pos    // position of VIRTUAL keyword
+	Name    *Ident // constraint name
+	Expr    Expr   // default expression
+	Stored  bool
+	Virtual bool
 }
 
-// Clone returns a deep copy of c.
-func (c *GeneratedConstraint) Clone() *GeneratedConstraint {
-	if c == nil {
-		return c
-	}
-	other := *c
-	other.Name = c.Name.Clone()
-	other.Expr = CloneExpr(c.Expr)
-	return &other
+func (c *GeneratedConstraint) subnodes(yield func(Node) bool) bool {
+	return yieldNodes(yield, c.Name, c.Expr)
 }
 
 // String returns the string representation of the constraint.
 func (c *GeneratedConstraint) String() string {
-	var buf bytes.Buffer
+	var buf strings.Builder
 	if c.Name != nil {
 		buf.WriteString("CONSTRAINT ")
 		buf.WriteString(c.Name.String())
 		buf.WriteString(" ")
 	}
 
-	if c.Generated.IsValid() {
-		buf.WriteString("GENERATED ALWAYS ")
-	}
-
 	buf.WriteString("AS (")
 	buf.WriteString(c.Expr.String())
 	buf.WriteString(")")
 
-	if c.Stored.IsValid() {
+	if c.Stored {
 		buf.WriteString(" STORED")
-	} else if c.Virtual.IsValid() {
+	} else if c.Virtual {
 		buf.WriteString(" VIRTUAL")
 	}
 
@@ -1069,26 +643,17 @@ func (c *GeneratedConstraint) String() string {
 }
 
 type CollateConstraint struct {
-	Constraint Pos    // position of CONSTRAINT keyword
-	Name       *Ident // constraint name
-	Collate    Pos    // position of COLLATE keyword
-	Collation  *Ident // collation name
+	Name      *Ident // constraint name
+	Collation *Ident // collation name
 }
 
-// Clone returns a deep copy of c.
-func (c *CollateConstraint) Clone() *CollateConstraint {
-	if c == nil {
-		return c
-	}
-	other := *c
-	other.Name = c.Name.Clone()
-	other.Collation = c.Collation.Clone()
-	return &other
+func (c *CollateConstraint) subnodes(yield func(Node) bool) bool {
+	return yieldNodes(yield, c.Name, c.Collation)
 }
 
 // String returns the string representation of the constraint.
 func (c *CollateConstraint) String() string {
-	var buf bytes.Buffer
+	var buf strings.Builder
 	if c.Name != nil {
 		buf.WriteString("CONSTRAINT ")
 		buf.WriteString(c.Name.String())
@@ -1101,46 +666,50 @@ func (c *CollateConstraint) String() string {
 }
 
 type ForeignKeyConstraint struct {
-	Constraint Pos    // position of CONSTRAINT keyword
-	Name       *Ident // constraint name
-
-	Foreign    Pos      // position of FOREIGN keyword (table only)
-	ForeignKey Pos      // position of KEY keyword after FOREIGN (table only)
-	Lparen     Pos      // position of left paren (table only)
-	Columns    []*Ident // indexed columns (table only)
-	Rparen     Pos      // position of right paren (table only)
-
-	References         Pos              // position of REFERENCES keyword
+	Name               *Ident           // constraint name
+	Columns            []*Ident         // indexed columns (table only)
 	ForeignTable       *Ident           // foreign table name
-	ForeignLparen      Pos              // position of left paren
-	ForeignColumns     []*Ident         // column list
-	ForeignRparen      Pos              // position of right paren
+	ForeignColumns     []*Ident         // column list (optional)
 	Args               []*ForeignKeyArg // arguments
-	Deferrable         Pos              // position of DEFERRABLE keyword
-	Not                Pos              // position of NOT keyword
-	NotDeferrable      Pos              // position of DEFERRABLE keyword after NOT
-	Initially          Pos              // position of INITIALLY keyword
-	InitiallyDeferred  Pos              // position of DEFERRED keyword after INITIALLY
-	InitiallyImmediate Pos              // position of IMMEDIATE keyword after INITIALLY
+	Deferrable         bool
+	NotDeferrable      bool
+	InitiallyDeferred  bool
+	InitiallyImmediate bool
 }
 
-// Clone returns a deep copy of c.
-func (c *ForeignKeyConstraint) Clone() *ForeignKeyConstraint {
-	if c == nil {
-		return c
+func (c *ForeignKeyConstraint) subnodes(yield func(Node) bool) bool {
+	if !yieldNodes(yield, c.Name) {
+		return false
 	}
-	other := *c
-	other.Name = c.Name.Clone()
-	other.Columns = cloneIdents(c.Columns)
-	other.ForeignTable = c.ForeignTable.Clone()
-	other.ForeignColumns = cloneIdents(c.ForeignColumns)
-	other.Args = cloneForeignKeyArgs(c.Args)
-	return &other
+
+	for _, col := range c.Columns {
+		if !yieldNodes(yield, col) {
+			return false
+		}
+	}
+
+	if !yieldNodes(yield, c.ForeignTable) {
+		return false
+	}
+
+	for _, col := range c.ForeignColumns {
+		if !yieldNodes(yield, col) {
+			return false
+		}
+	}
+
+	for _, arg := range c.Args {
+		if !yieldNodes(yield, arg) {
+			return false
+		}
+	}
+
+	return true
 }
 
 // String returns the string representation of the constraint.
 func (c *ForeignKeyConstraint) String() string {
-	var buf bytes.Buffer
+	var buf strings.Builder
 	if c.Name != nil {
 		buf.WriteString("CONSTRAINT ")
 		buf.WriteString(c.Name.String())
@@ -1176,166 +745,122 @@ func (c *ForeignKeyConstraint) String() string {
 		buf.WriteString(c.Args[i].String())
 	}
 
-	if c.Deferrable.IsValid() || c.NotDeferrable.IsValid() {
-		if c.Deferrable.IsValid() {
-			buf.WriteString(" DEFERRABLE")
-		} else {
-			buf.WriteString(" NOT DEFERRABLE")
-		}
+	if c.Deferrable {
+		buf.WriteString(" DEFERRABLE")
+	} else if c.NotDeferrable {
+		buf.WriteString(" NOT DEFERRABLE")
+	}
 
-		if c.InitiallyDeferred.IsValid() {
-			buf.WriteString(" INITIALLY DEFERRED")
-		} else if c.InitiallyImmediate.IsValid() {
-			buf.WriteString(" INITIALLY IMMEDIATE")
-		}
+	if c.InitiallyDeferred {
+		buf.WriteString(" INITIALLY DEFERRED")
+	} else if c.InitiallyImmediate {
+		buf.WriteString(" INITIALLY IMMEDIATE")
 	}
 
 	return buf.String()
 }
 
 type ForeignKeyArg struct {
-	On         Pos // position of ON keyword
-	OnUpdate   Pos // position of the UPDATE keyword
-	OnDelete   Pos // position of the DELETE keyword
-	Set        Pos // position of the SET keyword
-	SetNull    Pos // position of the NULL keyword after SET
-	SetDefault Pos // position of the DEFAULT keyword after SET
-	Cascade    Pos // position of the CASCADE keyword
-	Restrict   Pos // position of the RESTRICT keyword
-	No         Pos // position of the NO keyword
-	NoAction   Pos // position of the ACTION keyword after NO
+	OnUpdate   bool
+	OnDelete   bool
+	SetNull    bool
+	SetDefault bool
+	Cascade    bool
+	Restrict   bool
+	NoAction   bool
 }
 
-// Clone returns a deep copy of arg.
-func (arg *ForeignKeyArg) Clone() *ForeignKeyArg {
-	if arg == nil {
-		return nil
-	}
-	other := *arg
-	return &other
-}
-
-func cloneForeignKeyArgs(a []*ForeignKeyArg) []*ForeignKeyArg {
-	if a == nil {
-		return nil
-	}
-	other := make([]*ForeignKeyArg, len(a))
-	for i := range a {
-		other[i] = a[i].Clone()
-	}
-	return other
+func (a *ForeignKeyArg) subnodes(yield func(Node) bool) bool {
+	return true
 }
 
 // String returns the string representation of the argument.
 func (c *ForeignKeyArg) String() string {
-	var buf bytes.Buffer
+	var buf strings.Builder
 	buf.WriteString("ON")
-	if c.OnUpdate.IsValid() {
+	if c.OnUpdate {
 		buf.WriteString(" UPDATE")
 	} else {
 		buf.WriteString(" DELETE")
 	}
 
-	if c.SetNull.IsValid() {
+	if c.SetNull {
 		buf.WriteString(" SET NULL")
-	} else if c.SetDefault.IsValid() {
+	} else if c.SetDefault {
 		buf.WriteString(" SET DEFAULT")
-	} else if c.Cascade.IsValid() {
+	} else if c.Cascade {
 		buf.WriteString(" CASCADE")
-	} else if c.Restrict.IsValid() {
+	} else if c.Restrict {
 		buf.WriteString(" RESTRICT")
-	} else if c.NoAction.IsValid() {
+	} else if c.NoAction {
 		buf.WriteString(" NO ACTION")
 	}
 	return buf.String()
 }
 
 type CreateVirtualTableStatement struct {
-	Create      Pos // position of CREATE keyword
-	Virtual     Pos // position of VIRTUAL keyword
-	Table       Pos // position of TABLE keyword
-	If          Pos // position of IF keyword (optional)
-	IfNot       Pos // position of NOT keyword (optional)
-	IfNotExists Pos // position of EXISTS keyword (optional)
-
-	Schema *Ident // schema name (optional)
-	Dot    Pos    // position of DOT token (optional)
-	Name   *Ident // table name
-
-	Using      Pos    // position of USING
-	ModuleName *Ident // name of an object that implements the virtual table
-
-	Lparen    Pos               // position of left paren of module argument list (optional)
-	Arguments []*ModuleArgument // module argument list (optional)
-	Rparen    Pos               // position of right paren of module argument list (optional)
-
+	IfNotExists bool
+	Name        *QualifiedName    // table name
+	ModuleName  *Ident            // name of an object that implements the virtual table
+	Arguments   []*ModuleArgument // module argument list (optional)
 }
 
-// Clone returns a deep copy of s.
-func (s *CreateVirtualTableStatement) Clone() *CreateVirtualTableStatement {
-	if s == nil {
-		return s
+func (s *CreateVirtualTableStatement) subnodes(yield func(Node) bool) bool {
+	if !yieldNodes(yield, s.Name, s.ModuleName) {
+		return false
 	}
-	other := *s
-	other.Schema = s.Name.Clone()
-	other.Name = s.Name.Clone()
-	other.ModuleName = s.ModuleName.Clone()
-	other.Arguments = cloneModuleArguments(s.Arguments)
-	return &other
+
+	for _, arg := range s.Arguments {
+		if !yieldNodes(yield, arg) {
+			return false
+		}
+	}
+
+	return true
 }
 
 // String returns the string representation of the statement.
 func (s *CreateVirtualTableStatement) String() string {
-	var buf bytes.Buffer
+	var buf strings.Builder
 	buf.WriteString("CREATE VIRTUAL TABLE ")
-	if s.IfNotExists.IsValid() {
+	if s.IfNotExists {
 		buf.WriteString("IF NOT EXISTS ")
 	}
 
-	if s.Schema != nil {
-		buf.WriteString(s.Schema.String())
-		buf.WriteString(".")
-	}
 	buf.WriteString(s.Name.String())
 
 	buf.WriteString(" USING ")
 	buf.WriteString(s.ModuleName.String())
-	if s.Lparen.IsValid() {
-		buf.WriteString(" (")
-		for i := range s.Arguments {
-			if i != 0 {
-				buf.WriteString(",")
-			}
-			buf.WriteString(s.Arguments[i].String())
+	buf.WriteString(" (")
+	for i := range s.Arguments {
+		if i != 0 {
+			buf.WriteString(",")
 		}
-		buf.WriteString(")")
+		buf.WriteString(s.Arguments[i].String())
 	}
+	buf.WriteString(")")
 	return buf.String()
 }
 
 type ModuleArgument struct {
 	Name    *Ident // argument name
-	Assign  Pos    // position of ASSIGN token (optional)
 	Literal Expr   // literal that is assigned to name (optional)
 	Type    *Type  // type of Name, if Assign is set then Type cant be (optional)
 }
 
-func (a *ModuleArgument) Clone() *ModuleArgument {
-	if a == nil {
-		return a
+func (a *ModuleArgument) subnodes(yield func(Node) bool) bool {
+	if !yieldNodes(yield, a.Name, a.Literal) {
+		return false
 	}
-	other := *a
-	other.Name = a.Name.Clone()
-	other.Literal = CloneExpr(a.Literal)
-	other.Type = a.Type.Clone()
-	return &other
+
+	return yieldNodes(yield, a.Type)
 }
 
 func (a *ModuleArgument) String() string {
-	var buf bytes.Buffer
+	var buf strings.Builder
 
 	buf.WriteString(a.Name.String())
-	if a.Assign.IsValid() {
+	if a.Literal != nil {
 		buf.WriteString("=")
 		buf.WriteString(a.Literal.String())
 	} else if a.Type != nil {
@@ -1345,30 +870,13 @@ func (a *ModuleArgument) String() string {
 
 	return buf.String()
 }
-func cloneModuleArguments(a []*ModuleArgument) []*ModuleArgument {
-	if a == nil {
-		return nil
-	}
-	other := make([]*ModuleArgument, len(a))
-	for i := range a {
-		other[i] = a[i].Clone()
-	}
-	return other
-}
 
 type AnalyzeStatement struct {
-	Analyze Pos    // position of ANALYZE keyword
-	Name    *Ident // table name
+	Name *QualifiedName // table or index name (or schema.table, schema.index) (optional)
 }
 
-// Clone returns a deep copy of s.
-func (s *AnalyzeStatement) Clone() *AnalyzeStatement {
-	if s == nil {
-		return nil
-	}
-	other := *s
-	other.Name = s.Name.Clone()
-	return &other
+func (s *AnalyzeStatement) subnodes(yield func(Node) bool) bool {
+	return yieldNodes(yield, s.Name)
 }
 
 // String returns the string representation of the statement.
@@ -1376,22 +884,16 @@ func (s *AnalyzeStatement) String() string {
 	if s.Name == nil {
 		return "ANALYZE"
 	}
+
 	return fmt.Sprintf("ANALYZE %s", s.Name.String())
 }
 
 type ReindexStatement struct {
-	Reindex Pos  // position of REINDEX keyword
-	Name    Expr // collation, index or table name (or schema.table, schema.index)
+	Name *QualifiedName // collation, index or table name (or schema.table, schema.index)
 }
 
-// Clone returns a deep copy of s.
-func (s *ReindexStatement) Clone() *ReindexStatement {
-	if s == nil {
-		return nil
-	}
-	other := *s
-	other.Name = CloneExpr(s.Name)
-	return &other
+func (s *ReindexStatement) subnodes(yield func(Node) bool) bool {
+	return yieldNodes(yield, s.Name)
 }
 
 // String returns the string representation of the statement.
@@ -1403,42 +905,26 @@ func (s *ReindexStatement) String() string {
 }
 
 type AlterTableStatement struct {
-	Alter Pos    // position of ALTER keyword
-	Table Pos    // position of TABLE keyword
-	Name  *Ident // table name
-
-	Rename   Pos    // position of RENAME keyword
-	RenameTo Pos    // position of TO keyword after RENAME
-	NewName  *Ident // new table name
-
-	RenameColumn  Pos    // position of COLUMN keyword after RENAME
-	ColumnName    *Ident // new column name
-	To            Pos    // position of TO keyword
-	NewColumnName *Ident // new column name
-
-	Add       Pos               // position of ADD keyword
-	AddColumn Pos               // position of COLUMN keyword after ADD
-	ColumnDef *ColumnDefinition // new column definition
+	Name          *QualifiedName    // table name
+	NewName       *Ident            // new table name
+	ColumnName    *Ident            // new column name
+	NewColumnName *Ident            // new column name
+	ColumnDef     *ColumnDefinition // new column definition
 }
 
-// Clone returns a deep copy of s.
-func (s *AlterTableStatement) Clone() *AlterTableStatement {
-	if s == nil {
-		return nil
+func (s *AlterTableStatement) subnodes(yield func(Node) bool) bool {
+	if !yieldNodes(yield, s.Name, s.NewName, s.ColumnName, s.NewColumnName) {
+		return false
 	}
-	other := *s
-	other.Name = other.Name.Clone()
-	other.NewName = s.NewName.Clone()
-	other.ColumnName = s.ColumnName.Clone()
-	other.NewColumnName = s.NewColumnName.Clone()
-	other.ColumnDef = s.ColumnDef.Clone()
-	return &other
+
+	return yieldNodes(yield, s.ColumnDef)
 }
 
 // String returns the string representation of the statement.
 func (s *AlterTableStatement) String() string {
-	var buf bytes.Buffer
+	var buf strings.Builder
 	buf.WriteString("ALTER TABLE ")
+
 	buf.WriteString(s.Name.String())
 
 	if s.NewName != nil {
@@ -1458,29 +944,12 @@ func (s *AlterTableStatement) String() string {
 }
 
 type Ident struct {
-	NamePos Pos    // identifier position
-	Name    string // identifier name
-	Quoted  bool   // true if double quoted
+	Quoted bool   // true if double quoted
+	Name   string // identifier name
 }
 
-// Clone returns a deep copy of i.
-func (i *Ident) Clone() *Ident {
-	if i == nil {
-		return nil
-	}
-	other := *i
-	return &other
-}
-
-func cloneIdents(a []*Ident) []*Ident {
-	if a == nil {
-		return nil
-	}
-	other := make([]*Ident, len(a))
-	for i := range a {
-		other[i] = a[i].Clone()
-	}
-	return other
+func (i *Ident) subnodes(yield func(Node) bool) bool {
+	return true
 }
 
 // String returns the string representation of the expression.
@@ -1488,32 +957,14 @@ func (i *Ident) String() string {
 	return `"` + strings.Replace(i.Name, `"`, `""`, -1) + `"`
 }
 
-// IdentName returns the name of ident. Returns a blank string if ident is nil.
-func IdentName(ident *Ident) string {
-	if ident == nil {
-		return ""
-	}
-	return ident.Name
-}
-
 type Type struct {
 	Name      *Ident     // type name
-	Lparen    Pos        // position of left paren (optional)
 	Precision *NumberLit // precision (optional)
 	Scale     *NumberLit // scale (optional)
-	Rparen    Pos        // position of right paren (optional)
 }
 
-// Clone returns a deep copy of t.
-func (t *Type) Clone() *Type {
-	if t == nil {
-		return nil
-	}
-	other := *t
-	other.Name = t.Name.Clone()
-	other.Precision = t.Precision.Clone()
-	other.Scale = t.Scale.Clone()
-	return &other
+func (t *Type) subnodes(yield func(Node) bool) bool {
+	return yieldNodes(yield, t.Name, t.Precision, t.Scale)
 }
 
 // String returns the string representation of the type.
@@ -1527,17 +978,11 @@ func (t *Type) String() string {
 }
 
 type StringLit struct {
-	ValuePos Pos    // literal position
-	Value    string // literal value (without quotes)
+	Value string // literal value (without quotes)
 }
 
-// Clone returns a deep copy of lit.
-func (lit *StringLit) Clone() *StringLit {
-	if lit == nil {
-		return nil
-	}
-	other := *lit
-	return &other
+func (lit *StringLit) subnodes(yield func(Node) bool) bool {
+	return true
 }
 
 // String returns the string representation of the expression.
@@ -1546,17 +991,11 @@ func (lit *StringLit) String() string {
 }
 
 type TimestampLit struct {
-	ValuePos Pos    // literal position
-	Value    string // literal value
+	Value string // literal value
 }
 
-// Clone returns a deep copy of lit.
-func (lit *TimestampLit) Clone() *TimestampLit {
-	if lit == nil {
-		return nil
-	}
-	other := *lit
-	return &other
+func (lit *TimestampLit) subnodes(yield func(Node) bool) bool {
+	return true
 }
 
 // String returns the string representation of the expression.
@@ -1565,17 +1004,11 @@ func (lit *TimestampLit) String() string {
 }
 
 type BlobLit struct {
-	ValuePos Pos    // literal position
-	Value    string // literal value
+	Value string // literal value
 }
 
-// Clone returns a deep copy of lit.
-func (lit *BlobLit) Clone() *BlobLit {
-	if lit == nil {
-		return nil
-	}
-	other := *lit
-	return &other
+func (lit *BlobLit) subnodes(yield func(Node) bool) bool {
+	return true
 }
 
 // String returns the string representation of the expression.
@@ -1584,17 +1017,11 @@ func (lit *BlobLit) String() string {
 }
 
 type NumberLit struct {
-	ValuePos Pos    // literal position
-	Value    string // literal value
+	Value string // literal value
 }
 
-// Clone returns a deep copy of lit.
-func (lit *NumberLit) Clone() *NumberLit {
-	if lit == nil {
-		return nil
-	}
-	other := *lit
-	return &other
+func (lit *NumberLit) subnodes(yield func(Node) bool) bool {
+	return true
 }
 
 // String returns the string representation of the expression.
@@ -1602,17 +1029,10 @@ func (lit *NumberLit) String() string {
 	return lit.Value
 }
 
-type NullLit struct {
-	Pos Pos
-}
+type NullLit struct{}
 
-// Clone returns a deep copy of lit.
-func (lit *NullLit) Clone() *NullLit {
-	if lit == nil {
-		return nil
-	}
-	other := *lit
-	return &other
+func (lit *NullLit) subnodes(yield func(Node) bool) bool {
+	return true
 }
 
 // String returns the string representation of the expression.
@@ -1621,17 +1041,11 @@ func (lit *NullLit) String() string {
 }
 
 type BoolLit struct {
-	ValuePos Pos  // literal position
-	Value    bool // literal value
+	Value bool // literal value
 }
 
-// Clone returns a deep copy of lit.
-func (lit *BoolLit) Clone() *BoolLit {
-	if lit == nil {
-		return nil
-	}
-	other := *lit
-	return &other
+func (lit *BoolLit) subnodes(yield func(Node) bool) bool {
+	return true
 }
 
 // String returns the string representation of the expression.
@@ -1643,17 +1057,11 @@ func (lit *BoolLit) String() string {
 }
 
 type BindExpr struct {
-	NamePos Pos    // name position
-	Name    string // binding name
+	Name string // binding name
 }
 
-// Clone returns a deep copy of expr.
-func (expr *BindExpr) Clone() *BindExpr {
-	if expr == nil {
-		return nil
-	}
-	other := *expr
-	return &other
+func (expr *BindExpr) subnodes(yield func(Node) bool) bool {
+	return true
 }
 
 // String returns the string representation of the expression.
@@ -1663,149 +1071,131 @@ func (expr *BindExpr) String() string {
 }
 
 type UnaryExpr struct {
-	OpPos Pos   // operation position
-	Op    Token // operation
-	X     Expr  // target expression
+	Op OpType // PLUS / MINUS / NOT / BITNOT
+	X  Expr   // target expression
 }
 
-// Clone returns a deep copy of expr.
-func (expr *UnaryExpr) Clone() *UnaryExpr {
-	if expr == nil {
-		return nil
-	}
-	other := *expr
-	other.X = CloneExpr(expr.X)
-	return &other
+func (expr *UnaryExpr) subnodes(yield func(Node) bool) bool {
+	return yieldNodes(yield, expr.X)
 }
 
 // String returns the string representation of the expression.
 func (expr *UnaryExpr) String() string {
 	switch expr.Op {
-	case PLUS:
+	case OP_PLUS:
 		return "+" + expr.X.String()
-	case MINUS:
+	case OP_MINUS:
 		return "-" + expr.X.String()
-	case NOT:
+	case OP_NOT:
 		return "NOT " + expr.X.String()
-	case BITNOT:
+	case OP_BITNOT:
 		return "~" + expr.X.String()
 	default:
-		panic(fmt.Sprintf("sql.UnaryExpr.String(): invalid op %s", expr.Op))
+		panic("invalid op")
 	}
 }
 
 type BinaryExpr struct {
-	X     Expr  // lhs
-	OpPos Pos   // position of Op
-	Op    Token // operator
-	Y     Expr  // rhs
+	X  Expr   // lhs
+	Op OpType // operator
+	Y  Expr   // rhs
 }
 
-// Clone returns a deep copy of expr.
-func (expr *BinaryExpr) Clone() *BinaryExpr {
-	if expr == nil {
-		return nil
-	}
-	other := *expr
-	other.X = CloneExpr(expr.X)
-	other.Y = CloneExpr(expr.Y)
-	return &other
+func (expr *BinaryExpr) subnodes(yield func(Node) bool) bool {
+	return yieldNodes(yield, expr.X, expr.Y)
 }
 
 // String returns the string representation of the expression.
 func (expr *BinaryExpr) String() string {
 	switch expr.Op {
-	case PLUS:
+	case OP_PLUS:
 		return expr.X.String() + " + " + expr.Y.String()
-	case MINUS:
+	case OP_MINUS:
 		return expr.X.String() + " - " + expr.Y.String()
-	case STAR:
+	case OP_MULTIPLY:
 		return expr.X.String() + " * " + expr.Y.String()
-	case SLASH:
+	case OP_DIVIDE:
 		return expr.X.String() + " / " + expr.Y.String()
-	case REM:
+	case OP_MODULO:
 		return expr.X.String() + " % " + expr.Y.String()
-	case CONCAT:
+	case OP_CONCAT:
 		return expr.X.String() + " || " + expr.Y.String()
-	case BETWEEN:
+	case OP_BETWEEN:
 		return expr.X.String() + " BETWEEN " + expr.Y.String()
-	case NOTBETWEEN:
+	case OP_NOT_BETWEEN:
 		return expr.X.String() + " NOT BETWEEN " + expr.Y.String()
-	case LSHIFT:
+	case OP_LSHIFT:
 		return expr.X.String() + " << " + expr.Y.String()
-	case RSHIFT:
+	case OP_RSHIFT:
 		return expr.X.String() + " >> " + expr.Y.String()
-	case BITAND:
+	case OP_BITAND:
 		return expr.X.String() + " & " + expr.Y.String()
-	case BITOR:
+	case OP_BITOR:
 		return expr.X.String() + " | " + expr.Y.String()
-	case LT:
+	case OP_LT:
 		return expr.X.String() + " < " + expr.Y.String()
-	case LE:
+	case OP_LE:
 		return expr.X.String() + " <= " + expr.Y.String()
-	case GT:
+	case OP_GT:
 		return expr.X.String() + " > " + expr.Y.String()
-	case GE:
+	case OP_GE:
 		return expr.X.String() + " >= " + expr.Y.String()
-	case EQ:
+	case OP_EQ:
 		return expr.X.String() + " = " + expr.Y.String()
-	case NE:
+	case OP_NE:
 		return expr.X.String() + " != " + expr.Y.String()
-	case JSON_EXTRACT_JSON:
+	case OP_JSON_EXTRACT_JSON:
 		return expr.X.String() + " -> " + expr.Y.String()
-	case JSON_EXTRACT_SQL:
+	case OP_JSON_EXTRACT_SQL:
 		return expr.X.String() + " ->> " + expr.Y.String()
-	case IS:
+	case OP_IS:
 		return expr.X.String() + " IS " + expr.Y.String()
-	case ISNOT:
+	case OP_IS_NOT:
 		return expr.X.String() + " IS NOT " + expr.Y.String()
-	case IN:
-		return expr.X.String() + " IN " + expr.Y.String()
-	case NOTIN:
-		return expr.X.String() + " NOT IN " + expr.Y.String()
-	case LIKE:
+	case OP_LIKE:
 		return expr.X.String() + " LIKE " + expr.Y.String()
-	case NOTLIKE:
+	case OP_NOT_LIKE:
 		return expr.X.String() + " NOT LIKE " + expr.Y.String()
-	case GLOB:
+	case OP_GLOB:
 		return expr.X.String() + " GLOB " + expr.Y.String()
-	case NOTGLOB:
+	case OP_NOT_GLOB:
 		return expr.X.String() + " NOT GLOB " + expr.Y.String()
-	case MATCH:
+	case OP_MATCH:
 		return expr.X.String() + " MATCH " + expr.Y.String()
-	case NOTMATCH:
+	case OP_NOT_MATCH:
 		return expr.X.String() + " NOT MATCH " + expr.Y.String()
-	case REGEXP:
+	case OP_REGEXP:
 		return expr.X.String() + " REGEXP " + expr.Y.String()
-	case NOTREGEXP:
+	case OP_NOT_REGEXP:
 		return expr.X.String() + " NOT REGEXP " + expr.Y.String()
-	case AND:
+	case OP_AND:
 		return expr.X.String() + " AND " + expr.Y.String()
-	case OR:
+	case OP_OR:
 		return expr.X.String() + " OR " + expr.Y.String()
+	case OP_IS_DISTINCT_FROM:
+		return expr.X.String() + " IS DISTINCT FROM " + expr.Y.String()
+	case OP_IS_NOT_DISTINCT_FROM:
+		return expr.X.String() + " IS NOT DISTINCT FROM " + expr.Y.String()
+	case OP_ESCAPE:
+		return expr.X.String() + " ESCAPE " + expr.Y.String()
+	case OP_COLLATE:
+		return expr.X.String() + " COLLATE " + expr.Y.String()
 	default:
-		panic(fmt.Sprintf("sql.BinaryExpr.String(): invalid op %s", expr.Op))
+		panic("invalid op")
 	}
 }
 
 type CastExpr struct {
-	Cast   Pos   // position of CAST keyword
-	Lparen Pos   // position of left paren
-	X      Expr  // target expression
-	As     Pos   // position of AS keyword
-	Type   *Type // cast type
-	Rparen Pos   // position of right paren
+	X    Expr  // target expression
+	Type *Type // cast type
 }
 
-// Clone returns a deep copy of expr.
-func (expr *CastExpr) Clone() *CastExpr {
-	if expr == nil {
-		return nil
+func (expr *CastExpr) subnodes(yield func(Node) bool) bool {
+	if !yieldNodes(yield, expr.X) {
+		return false
 	}
-	other := *expr
-	other.X = CloneExpr(expr.X)
-	other.Type = expr.Type.Clone()
-	return &other
+
+	return yieldNodes(yield, expr.Type)
 }
 
 // String returns the string representation of the expression.
@@ -1814,29 +1204,27 @@ func (expr *CastExpr) String() string {
 }
 
 type CaseExpr struct {
-	Case     Pos          // position of CASE keyword
 	Operand  Expr         // optional condition after the CASE keyword
 	Blocks   []*CaseBlock // list of WHEN/THEN pairs
-	Else     Pos          // position of ELSE keyword
 	ElseExpr Expr         // expression used by default case
-	End      Pos          // position of END keyword
 }
 
-// Clone returns a deep copy of expr.
-func (expr *CaseExpr) Clone() *CaseExpr {
-	if expr == nil {
-		return nil
+func (expr *CaseExpr) subnodes(yield func(Node) bool) bool {
+	if !yieldNodes(yield, expr.Operand) {
+		return false
 	}
-	other := *expr
-	other.Operand = CloneExpr(expr.Operand)
-	other.Blocks = cloneCaseBlocks(expr.Blocks)
-	other.ElseExpr = CloneExpr(expr.ElseExpr)
-	return &other
+	for _, blk := range expr.Blocks {
+		if !yieldNodes(yield, blk) {
+			return false
+		}
+	}
+
+	return yieldNodes(yield, expr.ElseExpr)
 }
 
 // String returns the string representation of the expression.
 func (expr *CaseExpr) String() string {
-	var buf bytes.Buffer
+	var buf strings.Builder
 	buf.WriteString("CASE")
 	if expr.Operand != nil {
 		buf.WriteString(" ")
@@ -1855,32 +1243,12 @@ func (expr *CaseExpr) String() string {
 }
 
 type CaseBlock struct {
-	When      Pos  // position of WHEN keyword
 	Condition Expr // block condition
-	Then      Pos  // position of THEN keyword
 	Body      Expr // result expression
 }
 
-// Clone returns a deep copy of blk.
-func (blk *CaseBlock) Clone() *CaseBlock {
-	if blk == nil {
-		return nil
-	}
-	other := *blk
-	other.Condition = CloneExpr(blk.Condition)
-	other.Body = CloneExpr(blk.Body)
-	return &other
-}
-
-func cloneCaseBlocks(a []*CaseBlock) []*CaseBlock {
-	if a == nil {
-		return nil
-	}
-	other := make([]*CaseBlock, len(a))
-	for i := range a {
-		other[i] = a[i].Clone()
-	}
-	return other
+func (b *CaseBlock) subnodes(yield func(Node) bool) bool {
+	return yieldNodes(yield, b.Condition, b.Body)
 }
 
 // String returns the string representation of the block.
@@ -1889,36 +1257,26 @@ func (b *CaseBlock) String() string {
 }
 
 type Raise struct {
-	Raise    Pos        // position of RAISE keyword
-	Lparen   Pos        // position of left paren
-	Ignore   Pos        // position of IGNORE keyword
-	Rollback Pos        // position of ROLLBACK keyword
-	Abort    Pos        // position of ABORT keyword
-	Fail     Pos        // position of FAIL keyword
-	Comma    Pos        // position of comma
+	Ignore   bool
+	Rollback bool
+	Abort    bool
+	Fail     bool
 	Error    *StringLit // error message
-	Rparen   Pos        // position of right paren
 }
 
-// Clone returns a deep copy of r.
-func (r *Raise) Clone() *Raise {
-	if r == nil {
-		return nil
-	}
-	other := *r
-	other.Error = r.Error.Clone()
-	return &other
+func (r *Raise) subnodes(yield func(Node) bool) bool {
+	return yieldNodes(yield, r.Error)
 }
 
 // String returns the string representation of the raise function.
 func (r *Raise) String() string {
-	var buf bytes.Buffer
+	var buf strings.Builder
 	buf.WriteString("RAISE(")
-	if r.Rollback.IsValid() {
+	if r.Rollback {
 		fmt.Fprintf(&buf, "ROLLBACK, %s", r.Error.String())
-	} else if r.Abort.IsValid() {
+	} else if r.Abort {
 		fmt.Fprintf(&buf, "ABORT, %s", r.Error.String())
-	} else if r.Fail.IsValid() {
+	} else if r.Fail {
 		fmt.Fprintf(&buf, "FAIL, %s", r.Error.String())
 	} else {
 		buf.WriteString("IGNORE")
@@ -1928,91 +1286,64 @@ func (r *Raise) String() string {
 }
 
 type Exists struct {
-	Not    Pos              // position of optional NOT keyword
-	Exists Pos              // position of EXISTS keyword
-	Lparen Pos              // position of left paren
+	Not    bool
 	Select *SelectStatement // select statement
-	Rparen Pos              // position of right paren
 }
 
-// Clone returns a deep copy of expr.
-func (expr *Exists) Clone() *Exists {
-	if expr == nil {
-		return nil
-	}
-	other := *expr
-	other.Select = expr.Select.Clone()
-	return &other
+func (expr *Exists) subnodes(yield func(Node) bool) bool {
+	return yieldNodes(yield, expr.Select)
 }
 
 // String returns the string representation of the expression.
 func (expr *Exists) String() string {
-	if expr.Not.IsValid() {
+	if expr.Not {
 		return fmt.Sprintf("NOT EXISTS (%s)", expr.Select.String())
 	}
 	return fmt.Sprintf("EXISTS (%s)", expr.Select.String())
 }
 
 type Null struct {
-	X     Expr  // expression being checked for null
-	Op    Token // IS or NOT token
-	OpPos Pos   // position of NOT NULL postfix operation
+	X  Expr   // expression being checked for null
+	Op OpType // NOTNULl / ISNULL
 }
 
-// Clone returns a deep copy of expr.
-func (expr *Null) Clone() *Null {
-	if expr == nil {
-		return nil
-	}
-	other := *expr
-	other.X = CloneExpr(expr.X)
-	return &other
+func (expr *Null) subnodes(yield func(Node) bool) bool {
+	return yieldNodes(yield, expr.X)
 }
 
 // String returns the string representation of the expression.
 func (expr *Null) String() string {
-	var buf bytes.Buffer
+	var buf strings.Builder
 
 	buf.WriteString(expr.X.String())
-	if expr.Op == ISNULL {
+	switch expr.Op {
+	case OP_ISNULL:
 		buf.WriteString(" IS NULL")
-	} else {
+	case OP_NOTNULL:
 		buf.WriteString(" NOT NULL")
+	default:
+		panic("invalid op")
 	}
 
 	return buf.String()
 }
 
 type ExprList struct {
-	Lparen Pos    // position of left paren
-	Exprs  []Expr // list of expressions
-	Rparen Pos    // position of right paren
+	Exprs []Expr // list of expressions
 }
 
-// Clone returns a deep copy of l.
-func (l *ExprList) Clone() *ExprList {
-	if l == nil {
-		return nil
+func (l *ExprList) subnodes(yield func(Node) bool) bool {
+	for _, expr := range l.Exprs {
+		if !yieldNodes(yield, expr) {
+			return false
+		}
 	}
-	other := *l
-	other.Exprs = cloneExprs(l.Exprs)
-	return &other
-}
-
-func cloneExprLists(a []*ExprList) []*ExprList {
-	if a == nil {
-		return nil
-	}
-	other := make([]*ExprList, len(a))
-	for i := range a {
-		other[i] = a[i].Clone()
-	}
-	return other
+	return true
 }
 
 // String returns the string representation of the expression.
 func (l *ExprList) String() string {
-	var buf bytes.Buffer
+	var buf strings.Builder
 	buf.WriteString("(")
 	for i, expr := range l.Exprs {
 		if i != 0 {
@@ -2024,184 +1355,57 @@ func (l *ExprList) String() string {
 	return buf.String()
 }
 
-type Range struct {
-	X   Expr // lhs expression
-	And Pos  // position of AND keyword
-	Y   Expr // rhs expression
-}
-
-// Clone returns a deep copy of r.
-func (r *Range) Clone() *Range {
-	if r == nil {
-		return nil
-	}
-	other := *r
-	other.X = CloneExpr(r.X)
-	other.Y = CloneExpr(r.Y)
-	return &other
-}
-
-// String returns the string representation of the expression.
-func (r *Range) String() string {
-	return fmt.Sprintf("%s AND %s", r.X.String(), r.Y.String())
-}
-
 type QualifiedRef struct {
-	Table  *Ident // table name
-	Dot    Pos    // position of dot
-	Star   Pos    // position of * (result column only)
-	Column *Ident // column name
+	Table  *QualifiedName // table name
+	Star   bool
+	Column *Ident // column name (optional, if star)
 }
 
-// Clone returns a deep copy of r.
-func (r *QualifiedRef) Clone() *QualifiedRef {
-	if r == nil {
-		return nil
-	}
-	other := *r
-	other.Table = r.Table.Clone()
-	other.Column = r.Column.Clone()
-	return &other
+func (r *QualifiedRef) subnodes(yield func(Node) bool) bool {
+	return yieldNodes(yield, r.Table, r.Column)
 }
 
 // String returns the string representation of the expression.
 func (r *QualifiedRef) String() string {
-	if r.Star.IsValid() {
+	if r.Star {
 		return fmt.Sprintf("%s.*", r.Table.String())
 	}
 	return fmt.Sprintf("%s.%s", r.Table.String(), r.Column.String())
 }
 
 type Call struct {
-	Name     *Ident        // function name
-	Lparen   Pos           // position of left paren
-	Star     Pos           // position of *
-	Distinct Pos           // position of DISTINCT keyword
-	Args     []Expr        // argument list
-	Rparen   Pos           // position of right paren
-	Filter   *FilterClause // filter clause
-	Over     *OverClause   // over clause
+	Name       *QualifiedName    // function name
+	Filter     Expr              // filter clause (optional)
+	OverName   *Ident            // over name (optional)
+	OverWindow *WindowDefinition // over window (optional)
 }
 
-// Clone returns a deep copy of c.
-func (c *Call) Clone() *Call {
-	if c == nil {
-		return nil
+func (c *Call) subnodes(yield func(Node) bool) bool {
+	if !yieldNodes(yield, c.Name, c.Filter, c.OverName) {
+		return false
 	}
-	other := *c
-	other.Name = c.Name.Clone()
-	other.Args = cloneExprs(c.Args)
-	other.Filter = c.Filter.Clone()
-	other.Over = c.Over.Clone()
-	return &other
+
+	return yieldNodes(yield, c.OverWindow)
 }
 
 // String returns the string representation of the expression.
 func (c *Call) String() string {
-	var buf bytes.Buffer
-	buf.WriteString(c.Name.Name)
-	buf.WriteString("(")
-	if c.Star.IsValid() {
-		buf.WriteString("*")
-	} else {
-		if c.Distinct.IsValid() {
-			buf.WriteString("DISTINCT")
-			if len(c.Args) != 0 {
-				buf.WriteString(" ")
-			}
-		}
-		for i, arg := range c.Args {
-			if i != 0 {
-				buf.WriteString(", ")
-			}
-			buf.WriteString(arg.String())
-		}
-	}
-	buf.WriteString(")")
+	var buf strings.Builder
+	buf.WriteString(c.Name.String())
 
 	if c.Filter != nil {
-		buf.WriteString(" ")
+		buf.WriteString(" FILTER (WHERE ")
 		buf.WriteString(c.Filter.String())
+		buf.WriteString(")")
 	}
 
-	if c.Over != nil {
-		buf.WriteString(" ")
-		buf.WriteString(c.Over.String())
+	if c.OverName != nil {
+		buf.WriteString(" OVER ")
+		buf.WriteString(c.OverName.String())
+	} else if c.OverWindow != nil {
+		buf.WriteString(" OVER ")
+		buf.WriteString(c.OverWindow.String())
 	}
-
-	return buf.String()
-}
-
-type FilterClause struct {
-	Filter Pos  // position of FILTER keyword
-	Lparen Pos  // position of left paren
-	Where  Pos  // position of WHERE keyword
-	X      Expr // filter expression
-	Rparen Pos  // position of right paren
-}
-
-// Clone returns a deep copy of c.
-func (c *FilterClause) Clone() *FilterClause {
-	if c == nil {
-		return nil
-	}
-	other := *c
-	other.X = CloneExpr(c.X)
-	return &other
-}
-
-// String returns the string representation of the clause.
-func (c *FilterClause) String() string {
-	return fmt.Sprintf("FILTER (WHERE %s)", c.X.String())
-}
-
-type OverClause struct {
-	Over       Pos               // position of OVER keyword
-	Name       *Ident            // window name
-	Definition *WindowDefinition // window definition
-}
-
-// Clone returns a deep copy of c.
-func (c *OverClause) Clone() *OverClause {
-	if c == nil {
-		return nil
-	}
-	other := *c
-	other.Name = c.Name.Clone()
-	other.Definition = c.Definition.Clone()
-	return &other
-}
-
-// String returns the string representation of the clause.
-func (c *OverClause) String() string {
-	if c.Name != nil {
-		return fmt.Sprintf("OVER %s", c.Name.String())
-	}
-	return fmt.Sprintf("OVER %s", c.Definition.String())
-}
-
-type CollationClause struct {
-	Collate Pos    // position of COLLATE keyword
-	Name    *Ident // collation function (e.g. BINARY, NOCASE, RTRIM or custom)
-
-}
-
-// Clone returns a deep copy of c.
-func (c *CollationClause) Clone() *CollationClause {
-	if c == nil {
-		return nil
-	}
-	other := *c
-	other.Name = c.Name.Clone()
-	return &other
-}
-
-// String returns the string representation of the collation.
-func (c *CollationClause) String() string {
-	var buf bytes.Buffer
-
-	buf.WriteString("COLLATE ")
-	buf.WriteString(c.Name.String())
 
 	return buf.String()
 }
@@ -2209,55 +1413,30 @@ func (c *CollationClause) String() string {
 type OrderingTerm struct {
 	X Expr // ordering expression
 
-	Collation *CollationClause
-
-	Asc  Pos // position of ASC keyword
-	Desc Pos // position of DESC keyword
-
-	Nulls      Pos // position of NULLS keyword
-	NullsFirst Pos // position of FIRST keyword
-	NullsLast  Pos // position of LAST keyword
+	Asc        bool
+	Desc       bool
+	NullsFirst bool
+	NullsLast  bool
 }
 
-// Clone returns a deep copy of t.
-func (t *OrderingTerm) Clone() *OrderingTerm {
-	if t == nil {
-		return nil
-	}
-	other := *t
-	other.X = CloneExpr(t.X)
-	return &other
-}
-
-func cloneOrderingTerms(a []*OrderingTerm) []*OrderingTerm {
-	if a == nil {
-		return nil
-	}
-	other := make([]*OrderingTerm, len(a))
-	for i := range a {
-		other[i] = a[i].Clone()
-	}
-	return other
+func (t *OrderingTerm) subnodes(yield func(Node) bool) bool {
+	return yieldNodes(yield, t.X)
 }
 
 // String returns the string representation of the term.
 func (t *OrderingTerm) String() string {
-	var buf bytes.Buffer
+	var buf strings.Builder
 	buf.WriteString(t.X.String())
 
-	if t.Collation != nil {
-		buf.WriteString(" ")
-		buf.WriteString(t.Collation.String())
-	}
-	if t.Asc.IsValid() {
+	if t.Asc {
 		buf.WriteString(" ASC")
-	} else if t.Desc.IsValid() {
+	} else if t.Desc {
 		buf.WriteString(" DESC")
 	}
 
-	if t.NullsFirst.IsValid() {
+	if t.NullsFirst {
 		buf.WriteString(" NULLS FIRST")
-	} else if t.NullsLast.IsValid() {
+	} else if t.NullsLast {
 		buf.WriteString(" NULLS LAST")
 	}
 
@@ -2265,173 +1444,149 @@ func (t *OrderingTerm) String() string {
 }
 
 type FrameSpec struct {
-	Range  Pos // position of RANGE keyword
-	Rows   Pos // position of ROWS keyword
-	Groups Pos // position of GROUPS keyword
+	Range   bool
+	Rows    bool
+	Groups  bool
+	Between bool // (optional)
 
-	Between Pos // position of BETWEEN keyword
+	X           Expr // lhs expression (optional)
+	CurrentRowX bool
+	FollowingX  bool
+	PrecedingX  bool
+	UnboundedX  bool
 
-	X           Expr // lhs expression
-	UnboundedX  Pos  // position of lhs UNBOUNDED keyword
-	PrecedingX  Pos  // position of lhs PRECEDING keyword
-	CurrentX    Pos  // position of lhs CURRENT keyword
-	CurrentRowX Pos  // position of lhs ROW keyword
-	FollowingX  Pos  // position of lhs FOLLOWING keyword
+	Y           Expr // rhs expression
+	CurrentRowY bool
+	FollowingY  bool
+	PrecedingY  bool
+	UnboundedY  bool
 
-	And Pos // position of AND keyword
-
-	Y           Expr // lhs expression
-	UnboundedY  Pos  // position of rhs UNBOUNDED keyword
-	FollowingY  Pos  // position of rhs FOLLOWING keyword
-	CurrentY    Pos  // position of rhs CURRENT keyword
-	CurrentRowY Pos  // position of rhs ROW keyword
-	PrecedingY  Pos  // position of rhs PRECEDING keyword
-
-	Exclude           Pos // position of EXCLUDE keyword
-	ExcludeNo         Pos // position of NO keyword after EXCLUDE
-	ExcludeNoOthers   Pos // position of OTHERS keyword after EXCLUDE NO
-	ExcludeCurrent    Pos // position of CURRENT keyword after EXCLUDE
-	ExcludeCurrentRow Pos // position of ROW keyword after EXCLUDE CURRENT
-	ExcludeGroup      Pos // position of GROUP keyword after EXCLUDE
-	ExcludeTies       Pos // position of TIES keyword after EXCLUDE
+	ExcludeNoOthers   bool
+	ExcludeCurrentRow bool
+	ExcludeGroup      bool
+	ExcludeTies       bool
 }
 
-// Clone returns a deep copy of s.
-func (s *FrameSpec) Clone() *FrameSpec {
-	if s == nil {
-		return nil
-	}
-	other := *s
-	other.X = CloneExpr(s.X)
-	other.X = CloneExpr(s.Y)
-	return &other
+func (s *FrameSpec) subnodes(yield func(Node) bool) bool {
+	return yieldNodes(yield, s.X, s.Y)
 }
 
 // String returns the string representation of the frame spec.
 func (s *FrameSpec) String() string {
-	var buf bytes.Buffer
-	if s.Range.IsValid() {
+	var buf strings.Builder
+	if s.Range {
 		buf.WriteString("RANGE")
-	} else if s.Rows.IsValid() {
+	} else if s.Rows {
 		buf.WriteString("ROWS")
-	} else if s.Groups.IsValid() {
+	} else if s.Groups {
 		buf.WriteString("GROUPS")
 	}
 
-	if s.Between.IsValid() {
+	if s.Between {
 		buf.WriteString(" BETWEEN")
-		if s.UnboundedX.IsValid() && s.PrecedingX.IsValid() {
+		if s.UnboundedX && s.PrecedingX {
 			buf.WriteString(" UNBOUNDED PRECEDING")
-		} else if s.X != nil && s.PrecedingX.IsValid() {
+		} else if s.X != nil && s.PrecedingX {
 			fmt.Fprintf(&buf, " %s PRECEDING", s.X.String())
-		} else if s.CurrentRowX.IsValid() {
+		} else if s.CurrentRowX {
 			buf.WriteString(" CURRENT ROW")
-		} else if s.X != nil && s.FollowingX.IsValid() {
+		} else if s.X != nil && s.FollowingX {
 			fmt.Fprintf(&buf, " %s FOLLOWING", s.X.String())
 		}
 
 		buf.WriteString(" AND")
 
-		if s.Y != nil && s.PrecedingY.IsValid() {
+		if s.Y != nil && s.PrecedingY {
 			fmt.Fprintf(&buf, " %s PRECEDING", s.Y.String())
-		} else if s.CurrentRowY.IsValid() {
+		} else if s.CurrentRowY {
 			buf.WriteString(" CURRENT ROW")
-		} else if s.Y != nil && s.FollowingY.IsValid() {
+		} else if s.Y != nil && s.FollowingY {
 			fmt.Fprintf(&buf, " %s FOLLOWING", s.Y.String())
-		} else if s.UnboundedY.IsValid() && s.FollowingY.IsValid() {
+		} else if s.UnboundedY && s.FollowingY {
 			buf.WriteString(" UNBOUNDED FOLLOWING")
 		}
 	} else {
-		if s.UnboundedX.IsValid() && s.PrecedingX.IsValid() {
+		if s.UnboundedX && s.PrecedingX {
 			buf.WriteString(" UNBOUNDED PRECEDING")
-		} else if s.X != nil && s.PrecedingX.IsValid() {
+		} else if s.X != nil && s.PrecedingX {
 			fmt.Fprintf(&buf, " %s PRECEDING", s.X.String())
-		} else if s.CurrentRowX.IsValid() {
+		} else if s.CurrentRowX {
 			buf.WriteString(" CURRENT ROW")
 		}
 	}
 
-	if s.ExcludeNoOthers.IsValid() {
+	if s.ExcludeNoOthers {
 		buf.WriteString(" EXCLUDE NO OTHERS")
-	} else if s.ExcludeCurrentRow.IsValid() {
+	} else if s.ExcludeCurrentRow {
 		buf.WriteString(" EXCLUDE CURRENT ROW")
-	} else if s.ExcludeGroup.IsValid() {
+	} else if s.ExcludeGroup {
 		buf.WriteString(" EXCLUDE GROUP")
-	} else if s.ExcludeTies.IsValid() {
+	} else if s.ExcludeTies {
 		buf.WriteString(" EXCLUDE TIES")
 	}
 
 	return buf.String()
 }
 
-type ColumnArg interface {
-	Node
-	columnArg()
-}
-
 type DropTableStatement struct {
-	Drop     Pos    // position of DROP keyword
-	Table    Pos    // position of TABLE keyword
-	If       Pos    // position of IF keyword
-	IfExists Pos    // position of EXISTS keyword after IF
-	Name     *Ident // view name
+	IfExists bool
+	Name     *QualifiedName // table name
 }
 
-// Clone returns a deep copy of s.
-func (s *DropTableStatement) Clone() *DropTableStatement {
-	if s == nil {
-		return nil
-	}
-	other := *s
-	other.Name = s.Name.Clone()
-	return &other
+func (s *DropTableStatement) subnodes(yield func(Node) bool) bool {
+	return yieldNodes(yield, s.Name)
 }
 
 // String returns the string representation of the statement.
 func (s *DropTableStatement) String() string {
-	var buf bytes.Buffer
-	buf.WriteString("DROP TABLE")
-	if s.IfExists.IsValid() {
-		buf.WriteString(" IF EXISTS")
+	var buf strings.Builder
+	buf.WriteString("DROP TABLE ")
+	if s.IfExists {
+		buf.WriteString("IF EXISTS ")
 	}
-	fmt.Fprintf(&buf, " %s", s.Name.String())
+
+	buf.WriteString(s.Name.String())
 	return buf.String()
 }
 
 type CreateViewStatement struct {
-	Create      Pos              // position of CREATE keyword
-	View        Pos              // position of VIEW keyword
-	If          Pos              // position of IF keyword
-	IfNot       Pos              // position of NOT keyword after IF
-	IfNotExists Pos              // position of EXISTS keyword after IF NOT
-	Name        *Ident           // view name
-	Lparen      Pos              // position of column list left paren
+	Temp        bool
+	IfNotExists bool
+	Name        *QualifiedName   // view name
 	Columns     []*Ident         // column list
-	Rparen      Pos              // position of column list right paren
-	As          Pos              // position of AS keyword
 	Select      *SelectStatement // source statement
 }
 
-// Clone returns a deep copy of s.
-func (s *CreateViewStatement) Clone() *CreateViewStatement {
-	if s == nil {
-		return nil
+func (s *CreateViewStatement) subnodes(yield func(Node) bool) bool {
+	if !yieldNodes(yield, s.Name) {
+		return false
 	}
-	other := *s
-	other.Name = s.Name.Clone()
-	other.Columns = cloneIdents(s.Columns)
-	other.Select = s.Select.Clone()
-	return &other
+
+	for _, col := range s.Columns {
+		if !yieldNodes(yield, col) {
+			return false
+		}
+	}
+
+	return yieldNodes(yield, s.Select)
 }
 
 // String returns the string representation of the statement.
 func (s *CreateViewStatement) String() string {
-	var buf bytes.Buffer
-	buf.WriteString("CREATE VIEW")
-	if s.IfNotExists.IsValid() {
-		buf.WriteString(" IF NOT EXISTS")
+	var buf strings.Builder
+	buf.WriteString("CREATE ")
+
+	if s.Temp {
+		buf.WriteString("TEMP ")
 	}
-	fmt.Fprintf(&buf, " %s", s.Name.String())
+
+	buf.WriteString("VIEW ")
+
+	if s.IfNotExists {
+		buf.WriteString("IF NOT EXISTS ")
+	}
+
+	buf.WriteString(s.Name.String())
 
 	if len(s.Columns) > 0 {
 		buf.WriteString(" (")
@@ -2450,75 +1605,61 @@ func (s *CreateViewStatement) String() string {
 }
 
 type DropViewStatement struct {
-	Drop     Pos    // position of DROP keyword
-	View     Pos    // position of VIEW keyword
-	If       Pos    // position of IF keyword
-	IfExists Pos    // position of EXISTS keyword after IF
-	Name     *Ident // view name
+	IfExists bool
+	Name     *QualifiedName // view name
 }
 
-// Clone returns a deep copy of s.
-func (s *DropViewStatement) Clone() *DropViewStatement {
-	if s == nil {
-		return nil
-	}
-	other := *s
-	other.Name = s.Name.Clone()
-	return &other
+func (s *DropViewStatement) subnodes(yield func(Node) bool) bool {
+	return yieldNodes(yield, s.Name)
 }
 
 // String returns the string representation of the statement.
 func (s *DropViewStatement) String() string {
-	var buf bytes.Buffer
-	buf.WriteString("DROP VIEW")
-	if s.IfExists.IsValid() {
-		buf.WriteString(" IF EXISTS")
+	var buf strings.Builder
+	buf.WriteString("DROP VIEW ")
+	if s.IfExists {
+		buf.WriteString("IF EXISTS ")
 	}
-	fmt.Fprintf(&buf, " %s", s.Name.String())
+
+	buf.WriteString(s.Name.String())
 	return buf.String()
 }
 
 type CreateIndexStatement struct {
-	Create      Pos              // position of CREATE keyword
-	Unique      Pos              // position of optional UNIQUE keyword
-	Index       Pos              // position of INDEX keyword
-	If          Pos              // position of IF keyword
-	IfNot       Pos              // position of NOT keyword after IF
-	IfNotExists Pos              // position of EXISTS keyword after IF NOT
-	Name        *Ident           // index name
-	On          Pos              // position of ON keyword
-	Table       *Ident           // index name
-	Lparen      Pos              // position of column list left paren
+	Unique      bool
+	IfNotExists bool
+	Name        *QualifiedName   // index name
+	Table       *Ident           // table name
 	Columns     []*IndexedColumn // column list
-	Rparen      Pos              // position of column list right paren
-	Where       Pos              // position of WHERE keyword
 	WhereExpr   Expr             // conditional expression
 }
 
-// Clone returns a deep copy of s.
-func (s *CreateIndexStatement) Clone() *CreateIndexStatement {
-	if s == nil {
-		return nil
+func (s *CreateIndexStatement) subnodes(yield func(Node) bool) bool {
+	if !yieldNodes(yield, s.Name, s.Table) {
+		return false
 	}
-	other := *s
-	other.Name = s.Name.Clone()
-	other.Table = s.Table.Clone()
-	other.Columns = cloneIndexedColumns(s.Columns)
-	other.WhereExpr = CloneExpr(s.WhereExpr)
-	return &other
+
+	for _, col := range s.Columns {
+		if !yieldNodes(yield, col) {
+			return false
+		}
+	}
+
+	return yieldNodes(yield, s.WhereExpr)
 }
 
 // String returns the string representation of the statement.
 func (s *CreateIndexStatement) String() string {
-	var buf bytes.Buffer
+	var buf strings.Builder
 	buf.WriteString("CREATE")
-	if s.Unique.IsValid() {
+	if s.Unique {
 		buf.WriteString(" UNIQUE")
 	}
 	buf.WriteString(" INDEX")
-	if s.IfNotExists.IsValid() {
+	if s.IfNotExists {
 		buf.WriteString(" IF NOT EXISTS")
 	}
+
 	fmt.Fprintf(&buf, " %s ON %s ", s.Name.String(), s.Table.String())
 
 	buf.WriteString("(")
@@ -2538,105 +1679,103 @@ func (s *CreateIndexStatement) String() string {
 }
 
 type DropIndexStatement struct {
-	Drop     Pos    // position of DROP keyword
-	Index    Pos    // position of INDEX keyword
-	If       Pos    // position of IF keyword
-	IfExists Pos    // position of EXISTS keyword after IF
-	Name     *Ident // index name
+	IfExists bool
+	Name     *QualifiedName // index name
 }
 
-// Clone returns a deep copy of s.
-func (s *DropIndexStatement) Clone() *DropIndexStatement {
-	if s == nil {
-		return nil
-	}
-	other := *s
-	other.Name = s.Name.Clone()
-	return &other
+func (s *DropIndexStatement) subnodes(yield func(Node) bool) bool {
+	return yieldNodes(yield, s.Name)
 }
 
 // String returns the string representation of the statement.
 func (s *DropIndexStatement) String() string {
-	var buf bytes.Buffer
-	buf.WriteString("DROP INDEX")
-	if s.IfExists.IsValid() {
-		buf.WriteString(" IF EXISTS")
+	var buf strings.Builder
+	buf.WriteString("DROP INDEX ")
+	if s.IfExists {
+		buf.WriteString("IF EXISTS ")
 	}
-	fmt.Fprintf(&buf, " %s", s.Name.String())
+
+	buf.WriteString(s.Name.String())
 	return buf.String()
 }
 
 type CreateTriggerStatement struct {
-	Create      Pos    // position of CREATE keyword
-	Trigger     Pos    // position of TRIGGER keyword
-	If          Pos    // position of IF keyword
-	IfNot       Pos    // position of NOT keyword after IF
-	IfNotExists Pos    // position of EXISTS keyword after IF NOT
-	Name        *Ident // index name
+	Temp        bool
+	IfNotExists bool
+	Name        *QualifiedName // trigger name
 
-	Before    Pos // position of BEFORE keyword
-	After     Pos // position of AFTER keyword
-	Instead   Pos // position of INSTEAD keyword
-	InsteadOf Pos // position of OF keyword after INSTEAD
+	Before    bool
+	After     bool
+	InsteadOf bool
 
-	Delete          Pos      // position of DELETE keyword
-	Insert          Pos      // position of INSERT keyword
-	Update          Pos      // position of UPDATE keyword
-	UpdateOf        Pos      // position of OF keyword after UPDATE
-	UpdateOfColumns []*Ident // columns list for UPDATE OF
-	On              Pos      // position of ON keyword
-	Table           *Ident   // table name
+	Delete          bool
+	Insert          bool
+	Update          bool
+	UpdateOfColumns []*Ident
+	Table           *Ident // table name
 
-	For        Pos // position of FOR keyword
-	ForEach    Pos // position of EACH keyword after FOR
-	ForEachRow Pos // position of ROW keyword after FOR EACH
+	ForEachRow bool
+	WhenExpr   Expr
 
-	When     Pos  // position of WHEN keyword
-	WhenExpr Expr // conditional expression
-
-	Begin Pos         // position of BEGIN keyword
-	Body  []Statement // trigger body
-	End   Pos         // position of END keyword
+	Body []Statement // trigger body
 }
 
-// Clone returns a deep copy of s.
-func (s *CreateTriggerStatement) Clone() *CreateTriggerStatement {
-	if s == nil {
-		return nil
+func (s *CreateTriggerStatement) subnodes(yield func(Node) bool) bool {
+	if !yieldNodes(yield, s.Name) {
+		return false
 	}
-	other := *s
-	other.Name = s.Name.Clone()
-	other.UpdateOfColumns = cloneIdents(s.UpdateOfColumns)
-	other.Table = s.Table.Clone()
-	other.WhenExpr = CloneExpr(s.WhenExpr)
-	other.Body = cloneStatements(s.Body)
-	return &other
+
+	for _, col := range s.UpdateOfColumns {
+		if !yieldNodes(yield, col) {
+			return false
+		}
+	}
+
+	if !yieldNodes(yield, s.Table, s.WhenExpr) {
+		return false
+	}
+
+	for _, stmt := range s.Body {
+		if !yieldNodes(yield, stmt) {
+			return false
+		}
+	}
+
+	return true
 }
 
 // String returns the string representation of the statement.
 func (s *CreateTriggerStatement) String() string {
-	var buf bytes.Buffer
-	buf.WriteString("CREATE TRIGGER")
-	if s.IfNotExists.IsValid() {
-		buf.WriteString(" IF NOT EXISTS")
-	}
-	fmt.Fprintf(&buf, " %s", s.Name.String())
+	var buf strings.Builder
+	buf.WriteString("CREATE ")
 
-	if s.Before.IsValid() {
+	if s.Temp {
+		buf.WriteString("TEMP ")
+	}
+
+	buf.WriteString("TRIGGER ")
+
+	if s.IfNotExists {
+		buf.WriteString("IF NOT EXISTS ")
+	}
+
+	buf.WriteString(s.Name.String())
+
+	if s.Before {
 		buf.WriteString(" BEFORE")
-	} else if s.After.IsValid() {
+	} else if s.After {
 		buf.WriteString(" AFTER")
-	} else if s.InsteadOf.IsValid() {
+	} else if s.InsteadOf {
 		buf.WriteString(" INSTEAD OF")
 	}
 
-	if s.Delete.IsValid() {
+	if s.Delete {
 		buf.WriteString(" DELETE")
-	} else if s.Insert.IsValid() {
+	} else if s.Insert {
 		buf.WriteString(" INSERT")
-	} else if s.Update.IsValid() {
+	} else if s.Update {
 		buf.WriteString(" UPDATE")
-		if s.UpdateOf.IsValid() {
+		if len(s.UpdateOfColumns) > 0 {
 			buf.WriteString(" OF ")
 			for i, col := range s.UpdateOfColumns {
 				if i != 0 {
@@ -2649,7 +1788,7 @@ func (s *CreateTriggerStatement) String() string {
 
 	fmt.Fprintf(&buf, " ON %s", s.Table.String())
 
-	if s.ForEachRow.IsValid() {
+	if s.ForEachRow {
 		buf.WriteString(" FOR EACH ROW")
 	}
 
@@ -2667,113 +1806,110 @@ func (s *CreateTriggerStatement) String() string {
 }
 
 type DropTriggerStatement struct {
-	Drop     Pos    // position of DROP keyword
-	Trigger  Pos    // position of TRIGGER keyword
-	If       Pos    // position of IF keyword
-	IfExists Pos    // position of EXISTS keyword after IF
-	Name     *Ident // trigger name
+	IfExists bool
+	Name     *QualifiedName // trigger name
 }
 
-// Clone returns a deep copy of s.
-func (s *DropTriggerStatement) Clone() *DropTriggerStatement {
-	if s == nil {
-		return nil
-	}
-	other := *s
-	other.Name = s.Name.Clone()
-	return &other
+func (s *DropTriggerStatement) subnodes(yield func(Node) bool) bool {
+	return yieldNodes(yield, s.Name)
 }
 
 // String returns the string representation of the statement.
 func (s *DropTriggerStatement) String() string {
-	var buf bytes.Buffer
-	buf.WriteString("DROP TRIGGER")
-	if s.IfExists.IsValid() {
-		buf.WriteString(" IF EXISTS")
+	var buf strings.Builder
+	buf.WriteString("DROP TRIGGER ")
+	if s.IfExists {
+		buf.WriteString("IF EXISTS ")
 	}
-	fmt.Fprintf(&buf, " %s", s.Name.String())
+
+	buf.WriteString(s.Name.String())
 	return buf.String()
 }
 
 type InsertStatement struct {
 	WithClause *WithClause // clause containing CTEs
 
-	Insert           Pos // position of INSERT keyword
-	Replace          Pos // position of REPLACE keyword
-	InsertOr         Pos // position of OR keyword after INSERT
-	InsertOrReplace  Pos // position of REPLACE keyword after INSERT OR
-	InsertOrRollback Pos // position of ROLLBACK keyword after INSERT OR
-	InsertOrAbort    Pos // position of ABORT keyword after INSERT OR
-	InsertOrFail     Pos // position of FAIL keyword after INSERT OR
-	InsertOrIgnore   Pos // position of IGNORE keyword after INSERT OR
-	Into             Pos // position of INTO keyword
-
-	Table *Ident // table name
-	As    Pos    // position of AS keyword
-	Alias *Ident // optional alias
-
-	ColumnsLparen Pos      // position of column list left paren
-	Columns       []*Ident // optional column list
-	ColumnsRparen Pos      // position of column list right paren
-
-	Values     Pos         // position of VALUES keyword
-	ValueLists []*ExprList // lists of lists of values
-
-	Select *SelectStatement // SELECT statement
-
-	Default       Pos // position of DEFAULT keyword
-	DefaultValues Pos // position of VALUES keyword after DEFAULT
-
-	UpsertClause    *UpsertClause    // optional upsert clause
-	ReturningClause *ReturningClause // optional RETURNING clause
+	Replace          bool
+	InsertOrReplace  bool
+	InsertOrRollback bool
+	InsertOrAbort    bool
+	InsertOrFail     bool
+	InsertOrIgnore   bool
+	Table            *QualifiedName   // table name (or schema.table)
+	Columns          []*Ident         // optional column list
+	ValueLists       []*ExprList      // lists of lists of values
+	Select           *SelectStatement // SELECT statement
+	DefaultValues    bool
+	UpsertClause     *UpsertClause   // optional upsert clause
+	ReturningColumns []*ResultColumn // list of result columns
 }
 
-// Clone returns a deep copy of s.
-func (s *InsertStatement) Clone() *InsertStatement {
-	if s == nil {
-		return nil
+func (s *InsertStatement) subnodes(yield func(Node) bool) bool {
+	if !yieldNodes(yield, s.WithClause) {
+		return false
 	}
-	other := *s
-	other.WithClause = s.WithClause.Clone()
-	other.Table = s.Table.Clone()
-	other.Alias = s.Alias.Clone()
-	other.Columns = cloneIdents(s.Columns)
-	other.ValueLists = cloneExprLists(s.ValueLists)
-	other.Select = s.Select.Clone()
-	other.UpsertClause = s.UpsertClause.Clone()
-	other.ReturningClause = s.ReturningClause.Clone()
-	return &other
+
+	if !yieldNodes(yield, s.Table) {
+		return false
+	}
+
+	for _, col := range s.Columns {
+		if !yieldNodes(yield, col) {
+			return false
+		}
+	}
+
+	for _, valueList := range s.ValueLists {
+		if !yieldNodes(yield, valueList) {
+			return false
+		}
+	}
+
+	if !yieldNodes(yield, s.Select) {
+		return false
+	}
+
+	if !yieldNodes(yield, s.UpsertClause) {
+		return false
+	}
+
+	for _, col := range s.ReturningColumns {
+		if !yieldNodes(yield, col) {
+			return false
+		}
+	}
+
+	return true
 }
 
 // String returns the string representation of the statement.
 func (s *InsertStatement) String() string {
-	var buf bytes.Buffer
+	var buf strings.Builder
 	if s.WithClause != nil {
 		buf.WriteString(s.WithClause.String())
 		buf.WriteString(" ")
 	}
 
-	if s.Replace.IsValid() {
+	if s.Replace {
 		buf.WriteString("REPLACE")
 	} else {
 		buf.WriteString("INSERT")
-		if s.InsertOrReplace.IsValid() {
+		if s.InsertOrReplace {
 			buf.WriteString(" OR REPLACE")
-		} else if s.InsertOrRollback.IsValid() {
+		} else if s.InsertOrRollback {
 			buf.WriteString(" OR ROLLBACK")
-		} else if s.InsertOrAbort.IsValid() {
+		} else if s.InsertOrAbort {
 			buf.WriteString(" OR ABORT")
-		} else if s.InsertOrFail.IsValid() {
+		} else if s.InsertOrFail {
 			buf.WriteString(" OR FAIL")
-		} else if s.InsertOrIgnore.IsValid() {
+		} else if s.InsertOrIgnore {
 			buf.WriteString(" OR IGNORE")
 		}
 	}
 
-	fmt.Fprintf(&buf, " INTO %s", s.Table.String())
-	if s.Alias != nil {
-		fmt.Fprintf(&buf, " AS %s", s.Alias.String())
-	}
+	buf.WriteString(" INTO ")
+
+	buf.WriteString(s.Table.String())
 
 	if len(s.Columns) != 0 {
 		buf.WriteString(" (")
@@ -2786,7 +1922,7 @@ func (s *InsertStatement) String() string {
 		buf.WriteString(")")
 	}
 
-	if s.DefaultValues.IsValid() {
+	if s.DefaultValues {
 		buf.WriteString(" DEFAULT VALUES")
 	} else if s.Select != nil {
 		fmt.Fprintf(&buf, " %s", s.Select.String())
@@ -2810,48 +1946,52 @@ func (s *InsertStatement) String() string {
 	if s.UpsertClause != nil {
 		fmt.Fprintf(&buf, " %s", s.UpsertClause.String())
 	}
-	if s.ReturningClause != nil {
-		fmt.Fprintf(&buf, " %s", s.ReturningClause.String())
+
+	if len(s.ReturningColumns) > 0 {
+		buf.WriteString(" RETURNING ")
+		for i, col := range s.ReturningColumns {
+			if i != 0 {
+				buf.WriteString(", ")
+			}
+			buf.WriteString(col.String())
+		}
 	}
 
 	return buf.String()
 }
 
 type UpsertClause struct {
-	On         Pos // position of ON keyword
-	OnConflict Pos // position of CONFLICT keyword after ON
-
-	Lparen    Pos              // position of column list left paren
-	Columns   []*IndexedColumn // optional indexed column list
-	Rparen    Pos              // position of column list right paren
-	Where     Pos              // position of WHERE keyword
-	WhereExpr Expr             // optional conditional expression
-
-	Do              Pos           // position of DO keyword
-	DoNothing       Pos           // position of NOTHING keyword after DO
-	DoUpdate        Pos           // position of UPDATE keyword after DO
-	DoUpdateSet     Pos           // position of SET keyword after DO UPDATE
+	Columns         []*IndexedColumn // optional indexed column list
+	WhereExpr       Expr             // optional conditional expression
+	DoNothing       bool
+	DoUpdateSet     bool
 	Assignments     []*Assignment // list of column assignments
-	UpdateWhere     Pos           // position of WHERE keyword for DO UPDATE SET
 	UpdateWhereExpr Expr          // optional conditional expression for DO UPDATE SET
 }
 
-// Clone returns a deep copy of c.
-func (c *UpsertClause) Clone() *UpsertClause {
-	if c == nil {
-		return nil
+func (c *UpsertClause) subnodes(yield func(Node) bool) bool {
+	for _, col := range c.Columns {
+		if !yieldNodes(yield, col) {
+			return false
+		}
 	}
-	other := *c
-	other.Columns = cloneIndexedColumns(c.Columns)
-	other.WhereExpr = CloneExpr(c.WhereExpr)
-	other.Assignments = cloneAssignments(c.Assignments)
-	other.UpdateWhereExpr = CloneExpr(c.UpdateWhereExpr)
-	return &other
+
+	if !yieldNodes(yield, c.WhereExpr) {
+		return false
+	}
+
+	for _, assignment := range c.Assignments {
+		if !yieldNodes(yield, assignment) {
+			return false
+		}
+	}
+
+	return yieldNodes(yield, c.UpdateWhereExpr)
 }
 
 // String returns the string representation of the clause.
 func (c *UpsertClause) String() string {
-	var buf bytes.Buffer
+	var buf strings.Builder
 	buf.WriteString("ON CONFLICT")
 
 	if len(c.Columns) != 0 {
@@ -2870,7 +2010,7 @@ func (c *UpsertClause) String() string {
 	}
 
 	buf.WriteString(" DO")
-	if c.DoNothing.IsValid() {
+	if c.DoNothing {
 		buf.WriteString(" NOTHING")
 	} else {
 		buf.WriteString(" UPDATE SET ")
@@ -2890,57 +2030,71 @@ func (c *UpsertClause) String() string {
 }
 
 type UpdateStatement struct {
-	WithClause *WithClause // clause containing CTEs
-
-	Update           Pos // position of UPDATE keyword
-	UpdateOr         Pos // position of OR keyword after UPDATE
-	UpdateOrReplace  Pos // position of REPLACE keyword after UPDATE OR
-	UpdateOrRollback Pos // position of ROLLBACK keyword after UPDATE OR
-	UpdateOrAbort    Pos // position of ABORT keyword after UPDATE OR
-	UpdateOrFail     Pos // position of FAIL keyword after UPDATE OR
-	UpdateOrIgnore   Pos // position of IGNORE keyword after UPDATE OR
-
-	Table *QualifiedTableName // table name
-
-	Set         Pos           // position of SET keyword
-	Assignments []*Assignment // list of column assignments
-	Where       Pos           // position of WHERE keyword
-	WhereExpr   Expr          // conditional expression
-
-	ReturningClause *ReturningClause // optional RETURNING clause
+	WithClause       *WithClause // clause containing CTEs
+	UpdateOrReplace  bool
+	UpdateOrRollback bool
+	UpdateOrAbort    bool
+	UpdateOrFail     bool
+	UpdateOrIgnore   bool
+	Table            *QualifiedName  // table name
+	Assignments      []*Assignment   // list of column assignments
+	WhereExpr        Expr            // conditional expression
+	ReturningColumns []*ResultColumn // list of result columns
+	OrderingTerms    []*OrderingTerm // terms of ORDER BY clause
+	LimitExpr        Expr            // limit expression
+	OffsetExpr       Expr            // offset expression
 }
 
-// Clone returns a deep copy of s.
-func (s *UpdateStatement) Clone() *UpdateStatement {
-	if s == nil {
-		return nil
+func (s *UpdateStatement) subnodes(yield func(Node) bool) bool {
+	if !yieldNodes(yield, s.WithClause) {
+		return false
 	}
-	other := *s
-	other.WithClause = s.WithClause.Clone()
-	other.Table = s.Table.Clone()
-	other.Assignments = cloneAssignments(s.Assignments)
-	other.WhereExpr = CloneExpr(s.WhereExpr)
-	return &other
+
+	if !yieldNodes(yield, s.Table) {
+		return false
+	}
+
+	for _, assignment := range s.Assignments {
+		if !yieldNodes(yield, assignment) {
+			return false
+		}
+	}
+	if !yieldNodes(yield, s.WhereExpr) {
+		return false
+	}
+
+	for _, col := range s.ReturningColumns {
+		if !yieldNodes(yield, col) {
+			return false
+		}
+	}
+
+	for _, term := range s.OrderingTerms {
+		if !yieldNodes(yield, term) {
+			return false
+		}
+	}
+	return yieldNodes(yield, s.LimitExpr, s.OffsetExpr)
 }
 
 // String returns the string representation of the clause.
 func (s *UpdateStatement) String() string {
-	var buf bytes.Buffer
+	var buf strings.Builder
 	if s.WithClause != nil {
 		buf.WriteString(s.WithClause.String())
 		buf.WriteString(" ")
 	}
 
 	buf.WriteString("UPDATE")
-	if s.UpdateOrRollback.IsValid() {
+	if s.UpdateOrRollback {
 		buf.WriteString(" OR ROLLBACK")
-	} else if s.UpdateOrAbort.IsValid() {
+	} else if s.UpdateOrAbort {
 		buf.WriteString(" OR ABORT")
-	} else if s.UpdateOrReplace.IsValid() {
+	} else if s.UpdateOrReplace {
 		buf.WriteString(" OR REPLACE")
-	} else if s.UpdateOrFail.IsValid() {
+	} else if s.UpdateOrFail {
 		buf.WriteString(" OR FAIL")
-	} else if s.UpdateOrIgnore.IsValid() {
+	} else if s.UpdateOrIgnore {
 		buf.WriteString(" OR IGNORE")
 	}
 
@@ -2958,76 +2112,74 @@ func (s *UpdateStatement) String() string {
 		fmt.Fprintf(&buf, " WHERE %s", s.WhereExpr.String())
 	}
 
-	return buf.String()
-}
-
-type ReturningClause struct {
-	Returning Pos             // position of RETURNING keyword
-	Columns   []*ResultColumn // list of result columns in the SELECT clause
-}
-
-// Clone returns a deep copy of c.
-func (c *ReturningClause) Clone() *ReturningClause {
-	if c == nil {
-		return nil
-	}
-	other := *c
-	return &other
-}
-
-// String returns the string representation of the clause.
-func (c *ReturningClause) String() string {
-	var buf bytes.Buffer
-	buf.WriteString("RETURNING ")
-	for i, col := range c.Columns {
-		if i != 0 {
-			buf.WriteString(", ")
+	if len(s.ReturningColumns) > 0 {
+		buf.WriteString(" RETURNING ")
+		for i, col := range s.ReturningColumns {
+			if i != 0 {
+				buf.WriteString(", ")
+			}
+			buf.WriteString(col.String())
 		}
-		buf.WriteString(col.String())
 	}
+
+	// Write ORDER BY.
+	if len(s.OrderingTerms) != 0 {
+		buf.WriteString(" ORDER BY ")
+		for i, term := range s.OrderingTerms {
+			if i != 0 {
+				buf.WriteString(", ")
+			}
+			buf.WriteString(term.String())
+		}
+	}
+
+	// Write LIMIT/OFFSET.
+	if s.LimitExpr != nil {
+		fmt.Fprintf(&buf, " LIMIT %s", s.LimitExpr.String())
+		if s.OffsetExpr != nil {
+			fmt.Fprintf(&buf, " OFFSET %s", s.OffsetExpr.String())
+		}
+	}
+
 	return buf.String()
 }
 
 type DeleteStatement struct {
-	WithClause *WithClause         // clause containing CTEs
-	Delete     Pos                 // position of UPDATE keyword
-	From       Pos                 // position of FROM keyword
-	Table      *QualifiedTableName // table name
-
-	Where     Pos  // position of WHERE keyword
-	WhereExpr Expr // conditional expression
-
-	Order         Pos             // position of ORDER keyword
-	OrderBy       Pos             // position of BY keyword after ORDER
-	OrderingTerms []*OrderingTerm // terms of ORDER BY clause
-
-	Limit       Pos  // position of LIMIT keyword
-	LimitExpr   Expr // limit expression
-	Offset      Pos  // position of OFFSET keyword
-	OffsetComma Pos  // position of COMMA (instead of OFFSET)
-	OffsetExpr  Expr // offset expression
-
-	ReturningClause *ReturningClause // optional RETURNING clause
+	WithClause       *WithClause     // clause containing CTEs
+	Table            *QualifiedName  // table name
+	WhereExpr        Expr            // conditional expression
+	ReturningColumns []*ResultColumn // list of result columns
+	OrderingTerms    []*OrderingTerm // terms of ORDER BY clause
+	LimitExpr        Expr            // limit expression
+	OffsetExpr       Expr            // offset expression
 }
 
-// Clone returns a deep copy of s.
-func (s *DeleteStatement) Clone() *DeleteStatement {
-	if s == nil {
-		return nil
+func (s *DeleteStatement) subnodes(yield func(Node) bool) bool {
+	if !yieldNodes(yield, s.WithClause) {
+		return false
 	}
-	other := *s
-	other.WithClause = s.WithClause.Clone()
-	other.Table = s.Table.Clone()
-	other.WhereExpr = CloneExpr(s.WhereExpr)
-	other.OrderingTerms = cloneOrderingTerms(s.OrderingTerms)
-	other.LimitExpr = CloneExpr(s.LimitExpr)
-	other.OffsetExpr = CloneExpr(s.OffsetExpr)
-	return &other
+	if !yieldNodes(yield, s.Table) {
+		return false
+	}
+	if !yieldNodes(yield, s.WhereExpr) {
+		return false
+	}
+	for _, col := range s.ReturningColumns {
+		if !yieldNodes(yield, col) {
+			return false
+		}
+	}
+	for _, term := range s.OrderingTerms {
+		if !yieldNodes(yield, term) {
+			return false
+		}
+	}
+	return yieldNodes(yield, s.LimitExpr, s.OffsetExpr)
 }
 
 // String returns the string representation of the clause.
 func (s *DeleteStatement) String() string {
-	var buf bytes.Buffer
+	var buf strings.Builder
 	if s.WithClause != nil {
 		buf.WriteString(s.WithClause.String())
 		buf.WriteString(" ")
@@ -3036,6 +2188,16 @@ func (s *DeleteStatement) String() string {
 	fmt.Fprintf(&buf, "DELETE FROM %s", s.Table.String())
 	if s.WhereExpr != nil {
 		fmt.Fprintf(&buf, " WHERE %s", s.WhereExpr.String())
+	}
+
+	if len(s.ReturningColumns) > 0 {
+		buf.WriteString(" RETURNING ")
+		for i, col := range s.ReturningColumns {
+			if i != 0 {
+				buf.WriteString(", ")
+			}
+			buf.WriteString(col.String())
+		}
 	}
 
 	// Write ORDER BY.
@@ -3063,38 +2225,22 @@ func (s *DeleteStatement) String() string {
 // Assignment is used within the UPDATE statement & upsert clause.
 // It is similiar to an expression except that it must be an equality.
 type Assignment struct {
-	Lparen  Pos      // position of column list left paren
 	Columns []*Ident // column list
-	Rparen  Pos      // position of column list right paren
-	Eq      Pos      // position of =
 	Expr    Expr     // assigned expression
 }
 
-// Clone returns a deep copy of a.
-func (a *Assignment) Clone() *Assignment {
-	if a == nil {
-		return nil
+func (a *Assignment) subnodes(yield func(Node) bool) bool {
+	for _, col := range a.Columns {
+		if !yieldNodes(yield, col) {
+			return false
+		}
 	}
-	other := *a
-	other.Columns = cloneIdents(a.Columns)
-	other.Expr = CloneExpr(a.Expr)
-	return &other
-}
-
-func cloneAssignments(a []*Assignment) []*Assignment {
-	if a == nil {
-		return nil
-	}
-	other := make([]*Assignment, len(a))
-	for i := range a {
-		other[i] = a[i].Clone()
-	}
-	return other
+	return yieldNodes(yield, a.Expr)
 }
 
 // String returns the string representation of the clause.
 func (a *Assignment) String() string {
-	var buf bytes.Buffer
+	var buf strings.Builder
 	if len(a.Columns) == 1 {
 		buf.WriteString(a.Columns[0].String())
 	} else if len(a.Columns) > 1 {
@@ -3113,48 +2259,23 @@ func (a *Assignment) String() string {
 }
 
 type IndexedColumn struct {
-	X         Expr   // column expression
-	Collate   Pos    // position of COLLATE keyword
-	Collation *Ident // collation name
-	Asc       Pos    // position of optional ASC keyword
-	Desc      Pos    // position of optional DESC keyword
+	X    Expr // column expression
+	Asc  bool
+	Desc bool
 }
 
-// Clone returns a deep copy of c.
-func (c *IndexedColumn) Clone() *IndexedColumn {
-	if c == nil {
-		return nil
-	}
-	other := *c
-	other.X = CloneExpr(c.X)
-	other.Collation = c.Collation.Clone()
-	return &other
-}
-
-func cloneIndexedColumns(a []*IndexedColumn) []*IndexedColumn {
-	if a == nil {
-		return nil
-	}
-	other := make([]*IndexedColumn, len(a))
-	for i := range a {
-		other[i] = a[i].Clone()
-	}
-	return other
+func (c *IndexedColumn) subnodes(yield func(Node) bool) bool {
+	return yieldNodes(yield, c.X)
 }
 
 // String returns the string representation of the column.
 func (c *IndexedColumn) String() string {
-	var buf bytes.Buffer
+	var buf strings.Builder
 	buf.WriteString(c.X.String())
 
-	if c.Collate.IsValid() {
-		buf.WriteString(" COLLATE ")
-		buf.WriteString(c.Collation.String())
-	}
-
-	if c.Asc.IsValid() {
+	if c.Asc {
 		buf.WriteString(" ASC")
-	} else if c.Desc.IsValid() {
+	} else if c.Desc {
 		buf.WriteString(" DESC")
 	}
 
@@ -3162,72 +2283,78 @@ func (c *IndexedColumn) String() string {
 }
 
 type SelectStatement struct {
-	WithClause *WithClause // clause containing CTEs
-
-	Values     Pos         // position of VALUES keyword
-	ValueLists []*ExprList // lists of lists of values
-
-	Select   Pos             // position of SELECT keyword
-	Distinct Pos             // position of DISTINCT keyword
-	All      Pos             // position of ALL keyword
-	Columns  []*ResultColumn // list of result columns in the SELECT clause
-
-	From   Pos    // position of FROM keyword
-	Source Source // chain of tables & subqueries in FROM clause
-
-	Where     Pos  // position of WHERE keyword
-	WhereExpr Expr // condition for WHERE clause
-
-	Group        Pos    // position of GROUP keyword
-	GroupBy      Pos    // position of BY keyword after GROUP
-	GroupByExprs []Expr // group by expression list
-	Having       Pos    // position of HAVING keyword
-	HavingExpr   Expr   // HAVING expression
-
-	Window  Pos       // position of WINDOW keyword
-	Windows []*Window // window list
-
-	Union     Pos              // position of UNION keyword
-	UnionAll  Pos              // position of ALL keyword after UNION
-	Intersect Pos              // position of INTERSECT keyword
-	Except    Pos              // position of EXCEPT keyword
-	Compound  *SelectStatement // compounded SELECT statement
-
-	Order         Pos             // position of ORDER keyword
-	OrderBy       Pos             // position of BY keyword after ORDER
-	OrderingTerms []*OrderingTerm // terms of ORDER BY clause
-
-	Limit       Pos  // position of LIMIT keyword
-	LimitExpr   Expr // limit expression
-	Offset      Pos  // position of OFFSET keyword
-	OffsetComma Pos  // position of COMMA (instead of OFFSET)
-	OffsetExpr  Expr // offset expression
+	WithClause    *WithClause // clause containing CTEs
+	ValueLists    []*ExprList // lists of lists of values
+	Distinct      bool
+	All           bool
+	Columns       []*ResultColumn // list of result columns in the SELECT clause
+	Source        Source          // chain of tables & subqueries in FROM clause
+	WhereExpr     Expr            // condition for WHERE clause
+	GroupByExprs  []Expr          // group by expression list
+	HavingExpr    Expr            // HAVING expression
+	Windows       []*Window       // window list
+	UnionAll      bool
+	Intersect     bool
+	Except        bool
+	Compound      *SelectStatement // compounded SELECT statement
+	OrderingTerms []*OrderingTerm  // terms of ORDER BY clause
+	LimitExpr     Expr             // limit expression
+	OffsetExpr    Expr             // offset expression
 }
 
-// Clone returns a deep copy of s.
-func (s *SelectStatement) Clone() *SelectStatement {
-	if s == nil {
-		return nil
+func (s *SelectStatement) subnodes(yield func(Node) bool) bool {
+	if !yieldNodes(yield, s.WithClause) {
+		return false
 	}
-	other := *s
-	other.WithClause = s.WithClause.Clone()
-	other.ValueLists = cloneExprLists(s.ValueLists)
-	other.Columns = cloneResultColumns(s.Columns)
-	other.Source = CloneSource(s.Source)
-	other.WhereExpr = CloneExpr(s.WhereExpr)
-	other.GroupByExprs = cloneExprs(s.GroupByExprs)
-	other.HavingExpr = CloneExpr(s.HavingExpr)
-	other.Windows = cloneWindows(s.Windows)
-	other.Compound = s.Compound.Clone()
-	other.OrderingTerms = cloneOrderingTerms(s.OrderingTerms)
-	other.LimitExpr = CloneExpr(s.LimitExpr)
-	other.OffsetExpr = CloneExpr(s.OffsetExpr)
-	return &other
+
+	for _, valueList := range s.ValueLists {
+		if !yieldNodes(yield, valueList) {
+			return false
+		}
+	}
+
+	for _, col := range s.Columns {
+		if !yieldNodes(yield, col) {
+			return false
+		}
+	}
+
+	if !yieldNodes(yield, s.Source, s.WhereExpr) {
+		return false
+	}
+
+	for _, expr := range s.GroupByExprs {
+		if !yieldNodes(yield, expr) {
+			return false
+		}
+	}
+
+	if !yieldNodes(yield, s.HavingExpr) {
+		return false
+	}
+
+	for _, win := range s.Windows {
+		if !yieldNodes(yield, win) {
+			return false
+		}
+	}
+
+	if !yieldNodes(yield, s.Compound) {
+		return false
+	}
+
+	for _, term := range s.OrderingTerms {
+		if !yieldNodes(yield, term) {
+			return false
+		}
+	}
+
+	return yieldNodes(yield, s.LimitExpr, s.OffsetExpr)
 }
 
 // String returns the string representation of the statement.
 func (s *SelectStatement) String() string {
-	var buf bytes.Buffer
+	var buf strings.Builder
 	if s.WithClause != nil {
 		buf.WriteString(s.WithClause.String())
 		buf.WriteString(" ")
@@ -3251,9 +2378,9 @@ func (s *SelectStatement) String() string {
 		}
 	} else {
 		buf.WriteString("SELECT ")
-		if s.Distinct.IsValid() {
+		if s.Distinct {
 			buf.WriteString("DISTINCT ")
-		} else if s.All.IsValid() {
+		} else if s.All {
 			buf.WriteString("ALL ")
 		}
 
@@ -3300,15 +2427,14 @@ func (s *SelectStatement) String() string {
 	// Write compound operator.
 	if s.Compound != nil {
 		switch {
-		case s.Union.IsValid():
-			buf.WriteString(" UNION")
-			if s.UnionAll.IsValid() {
-				buf.WriteString(" ALL")
-			}
-		case s.Intersect.IsValid():
+		case s.UnionAll:
+			buf.WriteString(" UNION ALL")
+		case s.Intersect:
 			buf.WriteString(" INTERSECT")
-		case s.Except.IsValid():
+		case s.Except:
 			buf.WriteString(" EXCEPT")
+		default:
+			buf.WriteString(" UNION")
 		}
 
 		fmt.Fprintf(&buf, " %s", s.Compound.String())
@@ -3337,37 +2463,18 @@ func (s *SelectStatement) String() string {
 }
 
 type ResultColumn struct {
-	Star  Pos    // position of *
+	Star  bool
 	Expr  Expr   // column expression (may be "tbl.*")
-	As    Pos    // position of AS keyword
 	Alias *Ident // alias name
 }
 
-// Clone returns a deep copy of c.
-func (c *ResultColumn) Clone() *ResultColumn {
-	if c == nil {
-		return nil
-	}
-	other := *c
-	other.Expr = CloneExpr(c.Expr)
-	other.Alias = c.Alias.Clone()
-	return &other
-}
-
-func cloneResultColumns(a []*ResultColumn) []*ResultColumn {
-	if a == nil {
-		return nil
-	}
-	other := make([]*ResultColumn, len(a))
-	for i := range a {
-		other[i] = a[i].Clone()
-	}
-	return other
+func (c *ResultColumn) subnodes(yield func(Node) bool) bool {
+	return yieldNodes(yield, c.Expr, c.Alias)
 }
 
 // String returns the string representation of the column.
 func (c *ResultColumn) String() string {
-	if c.Star.IsValid() {
+	if c.Star {
 		return "*"
 	} else if c.Alias != nil {
 		return fmt.Sprintf("%s AS %s", c.Expr.String(), c.Alias.String())
@@ -3375,127 +2482,84 @@ func (c *ResultColumn) String() string {
 	return c.Expr.String()
 }
 
-type QualifiedTableName struct {
-	Schema     *Ident // schema name
-	Dot        Pos    // position of dot
-	Name       *Ident // table name
-	As         Pos    // position of AS keyword
-	Alias      *Ident // optional table alias
-	Indexed    Pos    // position of INDEXED keyword
-	IndexedBy  Pos    // position of BY keyword after INDEXED
-	Not        Pos    // position of NOT keyword before INDEXED
-	NotIndexed Pos    // position of NOT keyword before INDEXED
-	Index      *Ident // name of index
+type QualifiedName struct {
+	Schema           *Ident         // schema name (optional)
+	Name             *Ident         // name
+	FunctionCall     bool           // true if this is a function call
+	FunctionStar     bool           // true if this is a star for function call
+	FunctionDistinct bool           // true if this is a distinct for function call
+	FunctionArgs     []*FunctionArg // function arguments (optional)
+	Alias            *Ident         // optional table alias (optional)
+	NotIndexed       bool
+	Index            *Ident // name of index (optional)
 }
 
-// TableName returns the name used to identify n.
-// Returns the alias, if one is specified. Otherwise returns the name.
-func (n *QualifiedTableName) TableName() string {
-	if s := IdentName(n.Alias); s != "" {
-		return s
+func (s *QualifiedName) subnodes(yield func(Node) bool) bool {
+	if !yieldNodes(yield, s.Schema, s.Name) {
+		return false
 	}
-	return IdentName(n.Name)
-}
 
-// Clone returns a deep copy of n.
-func (n *QualifiedTableName) Clone() *QualifiedTableName {
-	if n == nil {
-		return nil
+	for _, arg := range s.FunctionArgs {
+		if !yieldNodes(yield, arg) {
+			return false
+		}
 	}
-	other := *n
-	other.Schema = n.Schema.Clone()
-	other.Name = n.Name.Clone()
-	other.Alias = n.Alias.Clone()
-	other.Index = n.Index.Clone()
-	return &other
+
+	return yieldNodes(yield, s.Alias, s.Index)
 }
 
 // String returns the string representation of the table name.
-func (n *QualifiedTableName) String() string {
-	var buf bytes.Buffer
+func (n *QualifiedName) String() string {
+	var buf strings.Builder
 	if n.Schema != nil {
 		buf.WriteString(n.Schema.String())
 		buf.WriteString(".")
 	}
+
 	buf.WriteString(n.Name.String())
+
+	if n.FunctionCall {
+		buf.WriteString("(")
+
+		if n.FunctionStar {
+			buf.WriteString("*")
+			assert(len(n.FunctionArgs) == 0)
+			assert(!n.FunctionDistinct)
+		}
+
+		if n.FunctionDistinct {
+			buf.WriteString("DISTINCT ")
+		}
+
+		for i, arg := range n.FunctionArgs {
+			if i != 0 {
+				buf.WriteString(", ")
+			}
+			buf.WriteString(arg.String())
+		}
+
+		buf.WriteString(")")
+	}
+
 	if n.Alias != nil {
 		fmt.Fprintf(&buf, " AS %s", n.Alias.String())
 	}
 
 	if n.Index != nil {
 		fmt.Fprintf(&buf, " INDEXED BY %s", n.Index.String())
-	} else if n.NotIndexed.IsValid() {
+	} else if n.NotIndexed {
 		buf.WriteString(" NOT INDEXED")
 	}
 	return buf.String()
 }
 
-type QualifiedTableFunctionName struct {
-	Name   *Ident // table function name
-	Lparen Pos    // position of left paren
-	Args   []Expr // argument list
-	Rparen Pos    // position of right paren
-	As     Pos    // position of AS keyword
-	Alias  *Ident // optional table alias
-}
-
-// TableName returns the name used to identify n.
-// Returns the alias, if one is specified. Otherwise returns the name.
-func (n *QualifiedTableFunctionName) TableName() string {
-	if s := IdentName(n.Alias); s != "" {
-		return s
-	}
-	return IdentName(n.Name)
-}
-
-// Clone returns a deep copy of n.
-func (n *QualifiedTableFunctionName) Clone() *QualifiedTableFunctionName {
-	if n == nil {
-		return nil
-	}
-	other := *n
-	other.Name = n.Name.Clone()
-	other.Args = cloneExprs(n.Args)
-	other.Alias = n.Alias.Clone()
-	return &other
-}
-
-// String returns the string representation of the table name.
-func (n *QualifiedTableFunctionName) String() string {
-	var buf bytes.Buffer
-	buf.WriteString(n.Name.String())
-	buf.WriteString("(")
-	for i, arg := range n.Args {
-		if i != 0 {
-			buf.WriteString(", ")
-		}
-		buf.WriteString(arg.String())
-	}
-	buf.WriteString(")")
-	if n.Alias != nil {
-		fmt.Fprintf(&buf, " AS %s", n.Alias.String())
-	}
-
-	return buf.String()
-}
-
 type ParenSource struct {
-	Lparen Pos    // position of left paren
-	X      Source // nested source
-	Rparen Pos    // position of right paren
-	As     Pos    // position of AS keyword (select source only)
-	Alias  *Ident // optional table alias (select source only)
+	X     Source // nested source
+	Alias *Ident // optional table alias (select source only)
 }
 
-// Clone returns a deep copy of s.
-func (s *ParenSource) Clone() *ParenSource {
-	if s == nil {
-		return nil
-	}
-	other := *s
-	other.X = CloneSource(s.X)
-	other.Alias = s.Alias.Clone()
-	return &other
+func (s *ParenSource) subnodes(yield func(Node) bool) bool {
+	return yieldNodes(yield, s.X, s.Alias)
 }
 
 // String returns the string representation of the source.
@@ -3513,21 +2577,21 @@ type JoinClause struct {
 	Constraint JoinConstraint // join constraint
 }
 
-// Clone returns a deep copy of c.
-func (c *JoinClause) Clone() *JoinClause {
-	if c == nil {
-		return nil
+func (c *JoinClause) subnodes(yield func(Node) bool) bool {
+	if !yieldNodes(yield, c.X) {
+		return false
 	}
-	other := *c
-	other.X = CloneSource(c.X)
-	other.Y = CloneSource(c.Y)
-	other.Constraint = CloneJoinConstraint(c.Constraint)
-	return &other
+
+	if !yieldNodes(yield, c.Operator) {
+		return false
+	}
+
+	return yieldNodes(yield, c.Y, c.Constraint)
 }
 
 // String returns the string representation of the clause.
 func (c *JoinClause) String() string {
-	var buf bytes.Buffer
+	var buf strings.Builder
 
 	// Print the left side
 	buf.WriteString(c.X.String())
@@ -3608,42 +2672,48 @@ func (c *JoinClause) String() string {
 }
 
 type JoinOperator struct {
-	Comma   Pos // position of comma
-	Natural Pos // position of NATURAL keyword
-	Left    Pos // position of LEFT keyword
-	Outer   Pos // position of OUTER keyword
-	Inner   Pos // position of INNER keyword
-	Cross   Pos // position of CROSS keyword
-	Join    Pos // position of JOIN keyword
+	Natural bool
+	Left    bool
+	Right   bool
+	Full    bool
+	Outer   bool
+	Inner   bool
+	Cross   bool
 }
 
-// Clone returns a deep copy of op.
-func (op *JoinOperator) Clone() *JoinOperator {
-	if op == nil {
-		return nil
-	}
-	other := *op
-	return &other
+func (op *JoinOperator) subnodes(yield func(Node) bool) bool {
+	return true
 }
 
 // String returns the string representation of the operator.
 func (op *JoinOperator) String() string {
-	if op.Comma.IsValid() {
+	if !op.Natural && !op.Left && !op.Right && !op.Full && !op.Outer && !op.Inner && !op.Cross {
 		return ", "
 	}
 
-	var buf bytes.Buffer
-	if op.Natural.IsValid() {
+	var buf strings.Builder
+	if op.Natural {
 		buf.WriteString(" NATURAL")
 	}
-	if op.Left.IsValid() {
+
+	if op.Left {
 		buf.WriteString(" LEFT")
-		if op.Outer.IsValid() {
+		if op.Outer {
 			buf.WriteString(" OUTER")
 		}
-	} else if op.Inner.IsValid() {
+	} else if op.Right {
+		buf.WriteString(" RIGHT")
+		if op.Outer {
+			buf.WriteString(" OUTER")
+		}
+	} else if op.Full {
+		buf.WriteString(" FULL")
+		if op.Outer {
+			buf.WriteString(" OUTER")
+		}
+	} else if op.Inner {
 		buf.WriteString(" INNER")
-	} else if op.Cross.IsValid() {
+	} else if op.Cross {
 		buf.WriteString(" CROSS")
 	}
 	buf.WriteString(" JOIN ")
@@ -3652,18 +2722,11 @@ func (op *JoinOperator) String() string {
 }
 
 type OnConstraint struct {
-	On Pos  // position of ON keyword
-	X  Expr // constraint expression
+	X Expr // constraint expression
 }
 
-// Clone returns a deep copy of c.
-func (c *OnConstraint) Clone() *OnConstraint {
-	if c == nil {
-		return nil
-	}
-	other := *c
-	other.X = CloneExpr(c.X)
-	return &other
+func (c *OnConstraint) subnodes(yield func(Node) bool) bool {
+	return yieldNodes(yield, c.X)
 }
 
 // String returns the string representation of the constraint.
@@ -3672,25 +2735,21 @@ func (c *OnConstraint) String() string {
 }
 
 type UsingConstraint struct {
-	Using   Pos      // position of USING keyword
-	Lparen  Pos      // position of left paren
 	Columns []*Ident // column list
-	Rparen  Pos      // position of right paren
 }
 
-// Clone returns a deep copy of c.
-func (c *UsingConstraint) Clone() *UsingConstraint {
-	if c == nil {
-		return nil
+func (c *UsingConstraint) subnodes(yield func(Node) bool) bool {
+	for _, col := range c.Columns {
+		if !yieldNodes(yield, col) {
+			return false
+		}
 	}
-	other := *c
-	other.Columns = cloneIdents(c.Columns)
-	return &other
+	return true
 }
 
 // String returns the string representation of the constraint.
 func (c *UsingConstraint) String() string {
-	var buf bytes.Buffer
+	var buf strings.Builder
 	buf.WriteString("USING (")
 	for i, col := range c.Columns {
 		if i != 0 {
@@ -3703,26 +2762,24 @@ func (c *UsingConstraint) String() string {
 }
 
 type WithClause struct {
-	With      Pos    // position of WITH keyword
-	Recursive Pos    // position of RECURSIVE keyword
+	Recursive bool
 	CTEs      []*CTE // common table expressions
 }
 
-// Clone returns a deep copy of c.
-func (c *WithClause) Clone() *WithClause {
-	if c == nil {
-		return nil
+func (c *WithClause) subnodes(yield func(Node) bool) bool {
+	for _, cte := range c.CTEs {
+		if !yieldNodes(yield, cte) {
+			return false
+		}
 	}
-	other := *c
-	other.CTEs = cloneCTEs(c.CTEs)
-	return &other
+	return true
 }
 
 // String returns the string representation of the clause.
 func (c *WithClause) String() string {
-	var buf bytes.Buffer
+	var buf strings.Builder
 	buf.WriteString("WITH ")
-	if c.Recursive.IsValid() {
+	if c.Recursive {
 		buf.WriteString("RECURSIVE ")
 	}
 
@@ -3738,42 +2795,28 @@ func (c *WithClause) String() string {
 
 // CTE represents an AST node for a common table expression.
 type CTE struct {
-	TableName     *Ident           // table name
-	ColumnsLparen Pos              // position of column list left paren
-	Columns       []*Ident         // optional column list
-	ColumnsRparen Pos              // position of column list right paren
-	As            Pos              // position of AS keyword
-	SelectLparen  Pos              // position of select left paren
-	Select        *SelectStatement // select statement
-	SelectRparen  Pos              // position of select right paren
+	TableName *Ident           // table name
+	Columns   []*Ident         // optional column list
+	Select    *SelectStatement // select statement
 }
 
-// Clone returns a deep copy of cte.
-func (cte *CTE) Clone() *CTE {
-	if cte == nil {
-		return nil
+func (cte *CTE) subnodes(yield func(Node) bool) bool {
+	if !yieldNodes(yield, cte.TableName) {
+		return false
 	}
-	other := *cte
-	other.TableName = cte.TableName.Clone()
-	other.Columns = cloneIdents(cte.Columns)
-	other.Select = cte.Select.Clone()
-	return &other
-}
 
-func cloneCTEs(a []*CTE) []*CTE {
-	if a == nil {
-		return nil
+	for _, col := range cte.Columns {
+		if !yieldNodes(yield, col) {
+			return false
+		}
 	}
-	other := make([]*CTE, len(a))
-	for i := range a {
-		other[i] = a[i].Clone()
-	}
-	return other
+
+	return yieldNodes(yield, cte.Select)
 }
 
 // String returns the string representation of the CTE.
 func (cte *CTE) String() string {
-	var buf bytes.Buffer
+	var buf strings.Builder
 	fmt.Fprintf(&buf, "%s", cte.TableName.String())
 
 	if len(cte.Columns) != 0 {
@@ -3792,63 +2835,17 @@ func (cte *CTE) String() string {
 	return buf.String()
 }
 
-type ParenExpr struct {
-	Lparen Pos  // position of left paren
-	X      Expr // parenthesized expression
-	Rparen Pos  // position of right paren
-}
-
-// Clone returns a deep copy of expr.
-func (expr *ParenExpr) Clone() *ParenExpr {
-	if expr == nil {
-		return nil
-	}
-	other := *expr
-	other.X = CloneExpr(expr.X)
-	return &other
-}
-
-// String returns the string representation of the expression.
-func (expr *ParenExpr) String() string {
-	return fmt.Sprintf("(%s)", expr.X.String())
-}
-
-// SelectExpr represents a SELECT statement inside an expression.
-type SelectExpr struct {
-	*SelectStatement
-}
-
-// Clone returns a deep copy of expr.
-func (expr SelectExpr) Clone() SelectExpr {
-	return SelectExpr{expr.SelectStatement.Clone()}
-}
-
 type Window struct {
 	Name       *Ident            // name of window
-	As         Pos               // position of AS keyword
 	Definition *WindowDefinition // window definition
 }
 
-// Clone returns a deep copy of w.
-func (w *Window) Clone() *Window {
-	if w == nil {
-		return nil
+func (w *Window) subnodes(yield func(Node) bool) bool {
+	if !yieldNodes(yield, w.Name) {
+		return false
 	}
-	other := *w
-	other.Name = w.Name.Clone()
-	other.Definition = w.Definition.Clone()
-	return &other
-}
 
-func cloneWindows(a []*Window) []*Window {
-	if a == nil {
-		return nil
-	}
-	other := make([]*Window, len(a))
-	for i := range a {
-		other[i] = a[i].Clone()
-	}
-	return other
+	return yieldNodes(yield, w.Definition)
 }
 
 // String returns the string representation of the window.
@@ -3857,34 +2854,35 @@ func (w *Window) String() string {
 }
 
 type WindowDefinition struct {
-	Lparen        Pos             // position of left paren
-	Base          *Ident          // base window name
-	Partition     Pos             // position of PARTITION keyword
-	PartitionBy   Pos             // position of BY keyword (after PARTITION)
+	Base          *Ident          // base window name (optional)
 	Partitions    []Expr          // partition expressions
-	Order         Pos             // position of ORDER keyword
-	OrderBy       Pos             // position of BY keyword (after ORDER)
 	OrderingTerms []*OrderingTerm // ordering terms
 	Frame         *FrameSpec      // frame
-	Rparen        Pos             // position of right paren
 }
 
-// Clone returns a deep copy of d.
-func (d *WindowDefinition) Clone() *WindowDefinition {
-	if d == nil {
-		return nil
+func (d *WindowDefinition) subnodes(yield func(Node) bool) bool {
+	if !yieldNodes(yield, d.Base) {
+		return false
 	}
-	other := *d
-	other.Base = d.Base.Clone()
-	other.Partitions = cloneExprs(d.Partitions)
-	other.OrderingTerms = cloneOrderingTerms(d.OrderingTerms)
-	other.Frame = d.Frame.Clone()
-	return &other
+
+	for _, p := range d.Partitions {
+		if !yieldNodes(yield, p) {
+			return false
+		}
+	}
+
+	for _, term := range d.OrderingTerms {
+		if !yieldNodes(yield, term) {
+			return false
+		}
+	}
+
+	return yieldNodes(yield, d.Frame)
 }
 
 // String returns the string representation of the window definition.
 func (d *WindowDefinition) String() string {
-	var buf bytes.Buffer
+	var buf strings.Builder
 	buf.WriteString("(")
 	if d.Base != nil {
 		buf.WriteString(d.Base.String())
@@ -3931,27 +2929,17 @@ func (d *WindowDefinition) String() string {
 }
 
 type PragmaStatement struct {
-	Pragma Pos    // position of PRAGMA keyword
 	Schema *Ident // name of schema (optional)
-	Dot    Pos    // position of DOT token (optional)
 	Expr   Expr   // can be Ident, Call or BinaryExpr
 }
 
-// Clone returns a deep copy of s.
-func (s *PragmaStatement) Clone() *PragmaStatement {
-	if s == nil {
-		return s
-	}
-
-	other := *s
-	other.Schema = s.Schema.Clone()
-	other.Expr = CloneExpr(s.Expr)
-	return &other
+func (s *PragmaStatement) subnodes(yield func(Node) bool) bool {
+	return yieldNodes(yield, s.Schema, s.Expr)
 }
 
 // String returns the string representation of the pragma statement.
 func (s *PragmaStatement) String() string {
-	var buf bytes.Buffer
+	var buf strings.Builder
 
 	buf.WriteString("PRAGMA ")
 	if s.Schema != nil {
@@ -3961,4 +2949,188 @@ func (s *PragmaStatement) String() string {
 	buf.WriteString(s.Expr.String())
 
 	return buf.String()
+}
+
+type AttachStatement struct {
+	Expr   *Ident // database expression (can be a string literal or identifier)
+	Schema *Ident // optional schema name
+}
+
+func (s *AttachStatement) subnodes(yield func(Node) bool) bool {
+	return yieldNodes(yield, s.Expr, s.Schema)
+}
+
+func (s *AttachStatement) String() string {
+	var buf strings.Builder
+	buf.WriteString("ATTACH ")
+
+	buf.WriteString(s.Expr.String())
+	if s.Schema != nil {
+		buf.WriteString(" AS ")
+		buf.WriteString(s.Schema.String())
+	}
+
+	return buf.String()
+}
+
+type DetachStatement struct {
+	Schema *Ident // schema name to detach
+}
+
+func (s *DetachStatement) subnodes(yield func(Node) bool) bool {
+	return yieldNodes(yield, s.Schema)
+}
+
+func (s *DetachStatement) String() string {
+	var buf strings.Builder
+	buf.WriteString("DETACH ")
+	if s.Schema != nil {
+		buf.WriteString(s.Schema.String())
+	}
+	return buf.String()
+}
+
+type VacuumStatement struct {
+	Schema *Ident // schema name (optional)
+	Expr   *Ident // optional expression (can be a string literal or identifier)
+}
+
+func (s *VacuumStatement) subnodes(yield func(Node) bool) bool {
+	return yieldNodes(yield, s.Schema, s.Expr)
+}
+
+func (s *VacuumStatement) String() string {
+	var buf strings.Builder
+	buf.WriteString("VACUUM")
+
+	if s.Schema != nil {
+		buf.WriteString(" ")
+		buf.WriteString(s.Schema.String())
+	}
+
+	if s.Expr != nil {
+		buf.WriteString(" INTO ")
+		buf.WriteString(s.Expr.String())
+	}
+
+	return buf.String()
+}
+
+type ConflictClause struct {
+	Rollback bool
+	Abort    bool
+	Fail     bool
+	Ignore   bool
+	Replace  bool
+}
+
+func (c *ConflictClause) subnodes(yield func(Node) bool) bool {
+	return true
+}
+
+func (c *ConflictClause) String() string {
+	var buf strings.Builder
+	buf.WriteString("ON CONFLICT")
+	if c.Rollback {
+		buf.WriteString(" ROLLBACK")
+	} else if c.Abort {
+		buf.WriteString(" ABORT")
+	} else if c.Fail {
+		buf.WriteString(" FAIL")
+	} else if c.Ignore {
+		buf.WriteString(" IGNORE")
+	} else if c.Replace {
+		buf.WriteString(" REPLACE")
+	} else {
+		panic("ConflictClause must have one of ROLLBACK, ABORT, FAIL, IGNORE or REPLACE set")
+	}
+	return buf.String()
+}
+
+type FunctionArg struct {
+	Expr          Expr            // expression for the argument
+	OrderingTerms []*OrderingTerm // ordering terms (optional)
+}
+
+func (a *FunctionArg) subnodes(yield func(Node) bool) bool {
+	if !yieldNodes(yield, a.Expr) {
+		return false
+	}
+
+	for _, term := range a.OrderingTerms {
+		if !yieldNodes(yield, term) {
+			return false
+		}
+	}
+
+	return true
+}
+
+func (a *FunctionArg) String() string {
+	var buf strings.Builder
+
+	buf.WriteString(a.Expr.String())
+
+	if len(a.OrderingTerms) > 0 {
+		buf.WriteString(" ORDER BY ")
+
+		for i, term := range a.OrderingTerms {
+			if i != 0 {
+				buf.WriteString(", ")
+			}
+			buf.WriteString(term.String())
+		}
+	}
+
+	return buf.String()
+}
+
+type InExpr struct {
+	X               Expr             // left-hand side expression
+	Op              OpType           // operator type (IN, NOT IN)
+	Select          *SelectStatement // optional SELECT statement (if IN is a subquery)
+	Values          *ExprList        // list of expressions (if IN list)
+	TableOrFunction *QualifiedName   // table or function reference (if IN table/function)
+}
+
+func (e *InExpr) subnodes(yield func(Node) bool) bool {
+	return yieldNodes(yield, e.X, e.Select, e.Values, e.TableOrFunction)
+}
+
+func (e *InExpr) String() string {
+	var buf strings.Builder
+	buf.WriteString(e.X.String())
+	switch e.Op {
+	case OP_IN:
+		buf.WriteString(" IN ")
+	case OP_NOT_IN:
+		buf.WriteString(" NOT IN ")
+	default:
+		panic("invalid operator for InExpr")
+	}
+
+	if e.TableOrFunction != nil {
+		buf.WriteString(" ")
+		buf.WriteString(e.TableOrFunction.String())
+	} else if e.Select != nil {
+		buf.WriteString(e.Select.String())
+	} else if e.Values != nil {
+		buf.WriteString(e.Values.String())
+	} else {
+		panic("InExpr must have either Select, Values or TableOrFunction set")
+	}
+
+	return buf.String()
+}
+
+type ParenExpr struct {
+	Expr Expr
+}
+
+func (e *ParenExpr) subnodes(yield func(Node) bool) bool {
+	return yieldNodes(yield, e.Expr)
+}
+
+func (e *ParenExpr) String() string {
+	return fmt.Sprintf("(%s)", e.Expr.String())
 }

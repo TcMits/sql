@@ -1,24 +1,12 @@
 package sql
 
 import (
-	"fmt"
 	"strconv"
-	"strings"
 )
 
-var (
-	keywords      = make(map[string]Token)
-	bareTokensMap = make(map[Token]struct{})
-)
+var bareTokensMap = make(map[Token]struct{})
 
 func init() {
-	for i := keyword_beg + 1; i < keyword_end; i++ {
-		keywords[tokens[i]] = i
-	}
-	keywords[tokens[NULL]] = NULL
-	keywords[tokens[TRUE]] = TRUE
-	keywords[tokens[FALSE]] = FALSE
-
 	for _, tok := range bareTokens {
 		bareTokensMap[tok] = struct{}{}
 	}
@@ -35,7 +23,7 @@ const (
 	COMMENT
 	SPACE
 
-	literal_beg
+	// literals
 	IDENT   // IDENT
 	QIDENT  // "IDENT"
 	STRING  // 'string'
@@ -46,43 +34,38 @@ const (
 	TRUE    // true
 	FALSE   // false
 	BIND    //? or ?NNN or :VVV or @VVV or $VVV
-	literal_end
 
-	operator_beg
-	SEMI   // ;
-	LP     // (
-	RP     // )
-	COMMA  // ,
-	NE     // !=
-	EQ     // =
-	LE     // <=
-	LT     // <
-	GT     // >
-	GE     // >=
-	BITAND // &
-	BITOR  // |
-	BITNOT // ~
-	LSHIFT // <<
-	RSHIFT // >>
-	PLUS   // +
-	MINUS  // -
-	STAR   // *
-	SLASH  // /
-	REM    // %
-	CONCAT // ||
-	DOT    // .
-
+	// operators and delimiters
+	SEMI              // ;
+	LP                // (
+	RP                // )
+	COMMA             // ,
+	NE                // !=
+	EQ                // =
+	LE                // <=
+	LT                // <
+	GT                // >
+	GE                // >=
+	BITAND            // &
+	BITOR             // |
+	BITNOT            // ~
+	LSHIFT            // <<
+	RSHIFT            // >>
+	PLUS              // +
+	MINUS             // -
+	STAR              // *
+	SLASH             // /
+	REM               // %
+	CONCAT            // ||
+	DOT               // .
 	JSON_EXTRACT_JSON // ->
 	JSON_EXTRACT_SQL  // ->>
-	operator_end
 
-	keyword_beg
+	// keywords
 	ABORT
 	ACTION
 	ADD
 	AFTER
-	AGG_COLUMN
-	AGG_FUNCTION
 	ALL
 	ALTER
 	ALWAYS
@@ -90,7 +73,6 @@ const (
 	AND
 	AS
 	ASC
-	ASTERISK
 	ATTACH
 	AUTOINCREMENT
 	BEFORE
@@ -103,16 +85,14 @@ const (
 	CHECK
 	COLLATE
 	COLUMN
-	COLUMNKW
 	COMMIT
 	CONFLICT
 	CONSTRAINT
 	CREATE
 	CROSS
-	CTIME_KW
 	CURRENT
-	CURRENT_TIME
 	CURRENT_DATE
+	CURRENT_TIME
 	CURRENT_TIMESTAMP
 	DATABASE
 	DEFAULT
@@ -140,14 +120,13 @@ const (
 	FOR
 	FOREIGN
 	FROM
-	FUNCTION
+	FULL
 	GENERATED
 	GLOB
 	GROUP
 	GROUPS
 	HAVING
 	IF
-	IF_NULL_ROW
 	IGNORE
 	IMMEDIATE
 	IN
@@ -160,8 +139,7 @@ const (
 	INTERSECT
 	INTO
 	IS
-	ISNOT
-	ISNULL // TODO: REMOVE?
+	ISNULL
 	JOIN
 	KEY
 	LAST
@@ -169,18 +147,12 @@ const (
 	LIKE
 	LIMIT
 	MATCH
+	MATERIALIZED
 	NATURAL
 	NO
 	NOT
-	NOTBETWEEN
-	NOTEXISTS
-	NOTGLOB
 	NOTHING
-	NOTIN
-	NOTLIKE
-	NOTMATCH
 	NOTNULL
-	NOTREGEXP
 	NULLS
 	OF
 	OFFSET
@@ -201,32 +173,27 @@ const (
 	RECURSIVE
 	REFERENCES
 	REGEXP
-	REGISTER
 	REINDEX
 	RELEASE
 	RENAME
 	REPLACE
 	RESTRICT
 	RETURNING
+	RIGHT
 	ROLLBACK
 	ROW
-	ROWID
 	ROWS
 	SAVEPOINT
 	SELECT
-	SELECT_COLUMN
 	SET
-	SPAN
-	STORED
-	STRICT
 	TABLE
 	TEMP
+	TEMPORARY
 	THEN
 	TIES
 	TO
 	TRANSACTION
 	TRIGGER
-	TRUTH
 	UNBOUNDED
 	UNION
 	UNIQUE
@@ -234,8 +201,6 @@ const (
 	USING
 	VACUUM
 	VALUES
-	VARIABLE
-	VECTOR
 	VIEW
 	VIRTUAL
 	WHEN
@@ -243,58 +208,63 @@ const (
 	WINDOW
 	WITH
 	WITHOUT
-	keyword_end
 
-	ANY // ???
-	token_end
+	// sepcial keywords not in https://sqlite.org/lang_keywords.html
+	STRICT
+	ROWID
+	STORED
 )
 
 var tokens = [...]string{
+	// Special tokens
 	ILLEGAL: "ILLEGAL",
 	EOF:     "EOF",
 	COMMENT: "COMMENT",
 	SPACE:   "SPACE",
 
-	IDENT:   "IDENT",
-	QIDENT:  "QIDENT",
-	STRING:  "STRING",
-	BLOB:    "BLOB",
-	FLOAT:   "FLOAT",
-	INTEGER: "INTEGER",
-	NULL:    "NULL",
-	TRUE:    "TRUE",
-	FALSE:   "FALSE",
-	BIND:    "BIND",
+	// literals
+	IDENT:   "IDENT",   // IDENT
+	QIDENT:  "QIDENT",  // "IDENT"
+	STRING:  "STRING",  // 'string'
+	BLOB:    "BLOB",    // ???
+	FLOAT:   "FLOAT",   // 123.45
+	INTEGER: "INTEGER", // 123
+	NULL:    "NULL",    // NULL
+	TRUE:    "TRUE",    // true
+	FALSE:   "FALSE",   // false
+	BIND:    "BIND",    //? or ?NNN or :VVV or @VVV or $VVV
 
-	SEMI:   ";",
-	LP:     "(",
-	RP:     ")",
-	COMMA:  ",",
-	NE:     "!=",
-	EQ:     "=",
-	LE:     "<=",
-	LT:     "<",
-	GT:     ">",
-	GE:     ">=",
-	BITAND: "&",
-	BITOR:  "|",
-	BITNOT: "~",
-	LSHIFT: "<<",
-	RSHIFT: ">>",
-	PLUS:   "+",
-	MINUS:  "-",
-	STAR:   "*",
-	SLASH:  "/",
-	REM:    "%",
-	CONCAT: "||",
-	DOT:    ".",
+	// operators and delimiters
+	SEMI:              ";",   // ;
+	LP:                "(",   // (
+	RP:                ")",   // )
+	COMMA:             ",",   // ,
+	NE:                "!=",  // !=
+	EQ:                "=",   // =
+	LE:                "<=",  // <=
+	LT:                "<",   // <
+	GT:                ">",   // >
+	GE:                ">=",  // >=
+	BITAND:            "&",   // &
+	BITOR:             "|",   // |
+	BITNOT:            "~",   // ~
+	LSHIFT:            "<<",  // <<
+	RSHIFT:            ">>",  // >>
+	PLUS:              "+",   // +
+	MINUS:             "-",   // -
+	STAR:              "*",   // *
+	SLASH:             "/",   // /
+	REM:               "%",   // %
+	CONCAT:            "||",  // ||
+	DOT:               ".",   // .
+	JSON_EXTRACT_JSON: "->",  // ->
+	JSON_EXTRACT_SQL:  "->>", // ->>
 
+	// keywords
 	ABORT:             "ABORT",
 	ACTION:            "ACTION",
 	ADD:               "ADD",
 	AFTER:             "AFTER",
-	AGG_COLUMN:        "AGG_COLUMN",
-	AGG_FUNCTION:      "AGG_FUNCTION",
 	ALL:               "ALL",
 	ALTER:             "ALTER",
 	ALWAYS:            "ALWAYS",
@@ -302,7 +272,6 @@ var tokens = [...]string{
 	AND:               "AND",
 	AS:                "AS",
 	ASC:               "ASC",
-	ASTERISK:          "ASTERISK",
 	ATTACH:            "ATTACH",
 	AUTOINCREMENT:     "AUTOINCREMENT",
 	BEFORE:            "BEFORE",
@@ -315,16 +284,14 @@ var tokens = [...]string{
 	CHECK:             "CHECK",
 	COLLATE:           "COLLATE",
 	COLUMN:            "COLUMN",
-	COLUMNKW:          "COLUMNKW",
 	COMMIT:            "COMMIT",
 	CONFLICT:          "CONFLICT",
 	CONSTRAINT:        "CONSTRAINT",
 	CREATE:            "CREATE",
 	CROSS:             "CROSS",
-	CTIME_KW:          "CTIME_KW",
 	CURRENT:           "CURRENT",
-	CURRENT_TIME:      "CURRENT_TIME",
 	CURRENT_DATE:      "CURRENT_DATE",
+	CURRENT_TIME:      "CURRENT_TIME",
 	CURRENT_TIMESTAMP: "CURRENT_TIMESTAMP",
 	DATABASE:          "DATABASE",
 	DEFAULT:           "DEFAULT",
@@ -352,14 +319,13 @@ var tokens = [...]string{
 	FOR:               "FOR",
 	FOREIGN:           "FOREIGN",
 	FROM:              "FROM",
-	FUNCTION:          "FUNCTION",
+	FULL:              "FULL",
 	GENERATED:         "GENERATED",
 	GLOB:              "GLOB",
 	GROUP:             "GROUP",
 	GROUPS:            "GROUPS",
 	HAVING:            "HAVING",
 	IF:                "IF",
-	IF_NULL_ROW:       "IF_NULL_ROW",
 	IGNORE:            "IGNORE",
 	IMMEDIATE:         "IMMEDIATE",
 	IN:                "IN",
@@ -372,7 +338,6 @@ var tokens = [...]string{
 	INTERSECT:         "INTERSECT",
 	INTO:              "INTO",
 	IS:                "IS",
-	ISNOT:             "ISNOT",
 	ISNULL:            "ISNULL",
 	JOIN:              "JOIN",
 	KEY:               "KEY",
@@ -381,18 +346,12 @@ var tokens = [...]string{
 	LIKE:              "LIKE",
 	LIMIT:             "LIMIT",
 	MATCH:             "MATCH",
-	NO:                "NO",
+	MATERIALIZED:      "MATERIALIZED",
 	NATURAL:           "NATURAL",
+	NO:                "NO",
 	NOT:               "NOT",
-	NOTBETWEEN:        "NOTBETWEEN",
-	NOTEXISTS:         "NOTEXISTS",
-	NOTGLOB:           "NOTGLOB",
 	NOTHING:           "NOTHING",
-	NOTIN:             "NOTIN",
-	NOTLIKE:           "NOTLIKE",
-	NOTMATCH:          "NOTMATCH",
 	NOTNULL:           "NOTNULL",
-	NOTREGEXP:         "NOTREGEXP",
 	NULLS:             "NULLS",
 	OF:                "OF",
 	OFFSET:            "OFFSET",
@@ -413,32 +372,27 @@ var tokens = [...]string{
 	RECURSIVE:         "RECURSIVE",
 	REFERENCES:        "REFERENCES",
 	REGEXP:            "REGEXP",
-	REGISTER:          "REGISTER",
 	REINDEX:           "REINDEX",
 	RELEASE:           "RELEASE",
 	RENAME:            "RENAME",
 	REPLACE:           "REPLACE",
 	RESTRICT:          "RESTRICT",
 	RETURNING:         "RETURNING",
+	RIGHT:             "RIGHT",
 	ROLLBACK:          "ROLLBACK",
 	ROW:               "ROW",
-	ROWID:             "ROWID",
 	ROWS:              "ROWS",
 	SAVEPOINT:         "SAVEPOINT",
 	SELECT:            "SELECT",
-	SELECT_COLUMN:     "SELECT_COLUMN",
 	SET:               "SET",
-	SPAN:              "SPAN",
-	STORED:            "STORED",
-	STRICT:            "STRICT",
 	TABLE:             "TABLE",
 	TEMP:              "TEMP",
+	TEMPORARY:         "TEMPORARY",
 	THEN:              "THEN",
 	TIES:              "TIES",
 	TO:                "TO",
 	TRANSACTION:       "TRANSACTION",
 	TRIGGER:           "TRIGGER",
-	TRUTH:             "TRUTH",
 	UNBOUNDED:         "UNBOUNDED",
 	UNION:             "UNION",
 	UNIQUE:            "UNIQUE",
@@ -446,8 +400,6 @@ var tokens = [...]string{
 	USING:             "USING",
 	VACUUM:            "VACUUM",
 	VALUES:            "VALUES",
-	VARIABLE:          "VARIABLE",
-	VECTOR:            "VECTOR",
 	VIEW:              "VIEW",
 	VIRTUAL:           "VIRTUAL",
 	WHEN:              "WHEN",
@@ -455,6 +407,11 @@ var tokens = [...]string{
 	WINDOW:            "WINDOW",
 	WITH:              "WITH",
 	WITHOUT:           "WITHOUT",
+
+	// sepcial keywords not in https://sqlite.org/lang_keywords.html
+	STRICT: "STRICT",
+	ROWID:  "ROWID",
+	STORED: "STORED",
 }
 
 // A list of keywords that can be used as unquoted identifiers.
@@ -467,8 +424,8 @@ var bareTokens = [...]Token{
 	INNER, INSTEAD, KEY, LAST, LEFT, LIKE, MATCH, NATURAL, NO, NULLS, OF,
 	OFFSET, OTHERS, OUTER, OVER, PARTITION, PLAN, PRAGMA, PRECEDING, QUERY,
 	RAISE, RANGE, RECURSIVE, REGEXP, REINDEX, RELEASE, RENAME, REPLACE,
-	RESTRICT, ROLLBACK, ROW, ROWS, SAVEPOINT, TEMP, TIES, TRIGGER,
-	UNBOUNDED, VACUUM, VIEW, VIRTUAL, WINDOW, WITH, WITHOUT,
+	RESTRICT, ROLLBACK, ROW, ROWS, SAVEPOINT, TEMP, TEMPORARY, TIES, TRIGGER,
+	UNBOUNDED, VACUUM, VIEW, VIRTUAL, WINDOW, WITH, WITHOUT, STRICT, ROWID, STORED,
 }
 
 func (tok Token) String() string {
@@ -482,116 +439,179 @@ func (tok Token) String() string {
 	return s
 }
 
-func Lookup(ident string) Token {
-	if tok, ok := keywords[strings.ToUpper(ident)]; ok {
-		return tok
-	}
-	return IDENT
-}
-
 // isBareToken returns true if keyword token can be used as an identifier.
 func isBareToken(tok Token) bool {
 	_, ok := bareTokensMap[tok]
 	return ok
 }
 
-func (tok Token) IsLiteral() bool {
-	return tok > literal_beg && tok < literal_end
-}
-
-func (tok Token) IsBinaryOp() bool {
-	switch tok {
-	case PLUS, MINUS, STAR, SLASH, REM, CONCAT, NOT, BETWEEN,
-		LSHIFT, RSHIFT, BITAND, BITOR, LT, LE, GT, GE, EQ, NE,
-		IS, IN, LIKE, GLOB, MATCH, REGEXP, AND, OR,
-		JSON_EXTRACT_JSON, JSON_EXTRACT_SQL:
-		return true
-	default:
-		return false
-	}
-}
-
 func isIdentToken(tok Token) bool {
-	return tok == IDENT || tok == QIDENT
+	return tok == IDENT || tok == QIDENT || tok == STRING || isBareToken(tok)
 }
 
 // isExprIdentToken returns true if tok can be used as an identifier in an expression.
 // It includes IDENT, QIDENT, and certain keywords.
 func isExprIdentToken(tok Token) bool {
 	switch tok {
-	case IDENT, QIDENT:
-		return true
-	// List keywords that can be used as identifiers in expressions
-	case ROWID, CURRENT_DATE, CURRENT_TIME, CURRENT_TIMESTAMP:
-		return true
-	// Core functions
-	case REPLACE, LIKE, GLOB, IF:
+	// List keywords that can be used as identifiers in expressions for pragma
+	case ON, FULL, DELETE:
 		return true
 	// Add any other non-reserved keywords here
 	default:
-		return false
+		return isIdentToken(tok)
 	}
-}
-
-const (
-	LowestPrec  = 0 // non-operators
-	UnaryPrec   = 13
-	HighestPrec = 14
-)
-
-func (op Token) Precedence() int {
-	switch op {
-	case OR:
-		return 1
-	case AND:
-		return 2
-	case NOT:
-		return 3
-	case IS, MATCH, LIKE, GLOB, REGEXP, BETWEEN, IN, ISNULL, NOTNULL, NE, EQ:
-		return 4
-	case GT, LE, LT, GE:
-		return 5
-	case ESCAPE:
-		return 6
-	case BITAND, BITOR, LSHIFT, RSHIFT:
-		return 7
-	case PLUS, MINUS:
-		return 8
-	case STAR, SLASH, REM:
-		return 9
-	case CONCAT, JSON_EXTRACT_JSON, JSON_EXTRACT_SQL:
-		return 10
-	case BITNOT:
-		return 11
-	}
-	return LowestPrec
-}
-
-type Pos struct {
-	Offset int // offset, starting at 0
-	Line   int // line number, starting at 1
-	Column int // column number, starting at 1 (byte count)
-}
-
-// String returns a string representation of the position.
-func (p Pos) String() string {
-	if !p.IsValid() {
-		return "-"
-	}
-	s := fmt.Sprintf("%d", p.Line)
-	if p.Column != 0 {
-		s += fmt.Sprintf(":%d", p.Column)
-	}
-	return s
-}
-
-// IsValid returns true if p is non-zero.
-func (p Pos) IsValid() bool {
-	return p != Pos{}
 }
 
 func assert(condition bool) {
 	if !condition {
 		panic("assert failed")
+	}
+}
+
+type OpType int
+
+const (
+	OP_ILLEGAL OpType = iota
+	OP_OR
+	OP_AND
+	OP_NOT
+	OP_ISNULL
+	OP_NOTNULL
+	OP_IN
+	OP_NOT_IN
+	OP_MATCH
+	OP_NOT_MATCH
+	OP_LIKE
+	OP_NOT_LIKE
+	OP_REGEXP
+	OP_NOT_REGEXP
+	OP_GLOB
+	OP_NOT_GLOB
+	OP_BETWEEN
+	OP_NOT_BETWEEN
+	OP_IS_DISTINCT_FROM
+	OP_IS_NOT_DISTINCT_FROM
+	OP_EQ
+	OP_NE
+	OP_IS
+	OP_IS_NOT
+	OP_LT
+	OP_LE
+	OP_GT
+	OP_GE
+	OP_ESCAPE
+	OP_BITAND
+	OP_BITOR
+	OP_LSHIFT
+	OP_RSHIFT
+	OP_PLUS
+	OP_MINUS
+	OP_MULTIPLY
+	OP_DIVIDE
+	OP_MODULO
+	OP_CONCAT
+	OP_JSON_EXTRACT_JSON
+	OP_JSON_EXTRACT_SQL
+	OP_COLLATE
+	OP_BITNOT
+)
+
+func (op OpType) Precedence() int {
+	switch {
+	case op < OP_OR || op > OP_BITNOT:
+		return 0
+	case op == OP_OR:
+		return 1
+	case op == OP_AND:
+		return 2
+	case op <= OP_IS_NOT:
+		return 3
+	case op <= OP_GE:
+		return 4
+	case op <= OP_ESCAPE:
+		return 5
+	case op <= OP_RSHIFT:
+		return 6
+	case op <= OP_MINUS:
+		return 7
+	case op <= OP_MODULO:
+		return 8
+	case op <= OP_JSON_EXTRACT_SQL:
+		return 9
+	case op <= OP_COLLATE:
+		return 10
+	default:
+		return 11
+	}
+}
+
+func precedenceByStartBinaryOp(tok Token) int {
+	switch tok {
+	case PLUS:
+		return OP_PLUS.Precedence()
+	case MINUS:
+		return OP_MINUS.Precedence()
+	case STAR:
+		return OP_MULTIPLY.Precedence()
+	case SLASH:
+		return OP_DIVIDE.Precedence()
+	case REM:
+		return OP_MODULO.Precedence()
+	case CONCAT:
+		return OP_CONCAT.Precedence()
+	case BETWEEN:
+		return OP_BETWEEN.Precedence()
+	case LSHIFT:
+		return OP_LSHIFT.Precedence()
+	case RSHIFT:
+		return OP_RSHIFT.Precedence()
+	case BITAND:
+		return OP_BITAND.Precedence()
+	case BITOR:
+		return OP_BITOR.Precedence()
+	case LT:
+		return OP_LT.Precedence()
+	case LE:
+		return OP_LE.Precedence()
+	case GT:
+		return OP_GT.Precedence()
+	case GE:
+		return OP_GE.Precedence()
+	case EQ:
+		return OP_EQ.Precedence()
+	case NE:
+		return OP_NE.Precedence()
+	case JSON_EXTRACT_JSON:
+		return OP_JSON_EXTRACT_JSON.Precedence()
+	case JSON_EXTRACT_SQL:
+		return OP_JSON_EXTRACT_SQL.Precedence()
+	case IN:
+		return OP_IN.Precedence()
+	case LIKE:
+		return OP_LIKE.Precedence()
+	case GLOB:
+		return OP_GLOB.Precedence()
+	case MATCH:
+		return OP_MATCH.Precedence()
+	case REGEXP:
+		return OP_REGEXP.Precedence()
+	case AND:
+		return OP_AND.Precedence()
+	case OR:
+		return OP_OR.Precedence()
+	case ISNULL:
+		return OP_ISNULL.Precedence()
+	case NOTNULL:
+		return OP_NOTNULL.Precedence()
+	case ESCAPE:
+		return OP_ESCAPE.Precedence()
+	case COLLATE:
+		return OP_COLLATE.Precedence()
+	case IS:
+		return OP_IS.Precedence()
+	case NOT:
+		return OP_NOTNULL.Precedence()
+	default:
+		return 0
 	}
 }

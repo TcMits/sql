@@ -1,32 +1,35 @@
 package sql
 
 import (
-	"bytes"
-	"io"
-	"unicode"
+	"strings"
+	"unsafe"
 )
 
-type Scanner struct {
-	r   io.RuneReader
-	buf bytes.Buffer
-
-	ch   rune
-	pos  Pos
-	full bool
+func stob(s string) []byte {
+	return unsafe.Slice(unsafe.StringData(s), len(s))
 }
 
-func NewScanner(r io.RuneReader) *Scanner {
-	return &Scanner{
-		r:   r,
-		pos: Pos{Offset: -1, Line: 1},
+type Scanner struct {
+	s    string
+	prev Pos // index of previous byte
+	pos  Pos
+}
+
+// NewScanner creates a new Scanner for the given string.
+func NewScanner(s string) Scanner {
+	return Scanner{
+		s:    s,
+		prev: NewValidPos(),
+		pos:  NewValidPos(),
 	}
 }
 
+// Scan returns the next token from the input string.
 func (s *Scanner) Scan() (pos Pos, token Token, lit string) {
 	for {
-		if ch := s.peek(); ch == -1 {
+		if ch := s.peek(); ch == 0 && s.isEOF() {
 			return s.pos, EOF, ""
-		} else if unicode.IsSpace(ch) {
+		} else if isSpace(ch) {
 			s.read()
 			continue
 		} else if isDigit(ch) || ch == '.' {
@@ -34,8 +37,8 @@ func (s *Scanner) Scan() (pos Pos, token Token, lit string) {
 		} else if ch == 'x' || ch == 'X' {
 			return s.scanBlob()
 		} else if isAlpha(ch) || ch == '_' {
-			return s.scanUnquotedIdent(s.pos, "")
-		} else if ch == '"' {
+			return s.scanUnquotedIdent()
+		} else if ch == '"' || ch == '`' || ch == '[' {
 			return s.scanQuotedIdent()
 		} else if ch == '\'' {
 			return s.scanString()
@@ -126,39 +129,55 @@ func (s *Scanner) Scan() (pos Pos, token Token, lit string) {
 	}
 }
 
-func (s *Scanner) scanUnquotedIdent(pos Pos, prefix string) (Pos, Token, string) {
+func (s *Scanner) scanUnquotedIdent() (Pos, Token, string) {
 	assert(isUnquotedIdent(s.peek()))
 
-	s.buf.Reset()
-	s.buf.WriteString(prefix)
-	for ch, _ := s.read(); isUnquotedIdent(ch); ch, _ = s.read() {
-		s.buf.WriteRune(ch)
+	pos := s.pos
+	for isUnquotedIdent(s.peek()) {
+		s.read()
 	}
-	s.unread()
+	end := s.pos.GetOffset()
 
-	lit := s.buf.String()
-	tok := Lookup(lit)
+	lit := s.s[pos.GetOffset():end]
+	tok := keywordOrIdent(lit)
 	return pos, tok, lit
 }
 
 func (s *Scanner) scanQuotedIdent() (Pos, Token, string) {
 	ch, pos := s.read()
-	assert(ch == '"')
+	var expectedEnd byte = '"'
+	allowDuplicate := true
+	findDuplicate := false
+	switch ch {
+	case '`':
+		expectedEnd = '`'
+	case '[':
+		expectedEnd = ']'
+		allowDuplicate = false
+	case '"':
+		expectedEnd = '"'
+	default:
+		panic("unexpected character for quoted identifier: " + string(ch))
+	}
 
-	s.buf.Reset()
+	start := s.pos.GetOffset()
 	for {
 		ch, _ := s.read()
-		if ch == -1 {
-			return pos, ILLEGAL, `"` + s.buf.String()
-		} else if ch == '"' {
-			if s.peek() == '"' { // escaped quote
+		if ch == 0 && s.isEOF() {
+			return pos, ILLEGAL, `"` + s.s[start:s.pos.GetOffset()]
+		} else if ch == expectedEnd {
+			if s.peek() == expectedEnd && allowDuplicate { // escaped quote
 				s.read()
-				s.buf.WriteRune('"')
+				findDuplicate = true
 				continue
 			}
-			return pos, QIDENT, s.buf.String()
+
+			if findDuplicate { // we found a duplicate quote, so we need to skip it
+				return pos, QIDENT, strings.ReplaceAll(s.s[start:s.pos.GetOffset()-1], string(expectedEnd)+string(expectedEnd), string(expectedEnd))
+			}
+
+			return pos, QIDENT, s.s[start : s.pos.GetOffset()-1]
 		}
-		s.buf.WriteRune(ch)
 	}
 }
 
@@ -166,76 +185,76 @@ func (s *Scanner) scanString() (Pos, Token, string) {
 	ch, pos := s.read()
 	assert(ch == '\'')
 
-	s.buf.Reset()
+	findDuplicate := false
+	start := s.pos.GetOffset()
 	for {
 		ch, _ := s.read()
-		if ch == -1 {
-			return pos, ILLEGAL, `'` + s.buf.String()
+		if ch == 0 && s.isEOF() {
+			return pos, ILLEGAL, s.s[start-1 : s.pos.GetOffset()]
 		} else if ch == '\'' {
 			if s.peek() == '\'' { // escaped quote
 				s.read()
-				s.buf.WriteRune('\'')
+				findDuplicate = true
 				continue
 			}
-			return pos, STRING, s.buf.String()
+
+			if findDuplicate { // we found a duplicate quote, so we need to skip it
+				return pos, STRING, strings.ReplaceAll(s.s[start:s.pos.GetOffset()-1], "''", "'")
+			}
+
+			return pos, STRING, s.s[start : s.pos.GetOffset()-1]
 		}
-		s.buf.WriteRune(ch)
 	}
 }
 
 func (s *Scanner) scanSingleLineComment() string {
-	s.buf.Reset()
-	s.buf.WriteString("--")
-
+	start := s.pos.GetOffset()
 	for {
 		ch, _ := s.read()
 		switch ch {
-		case -1, '\n':
-			return s.buf.String()
-		default:
-			s.buf.WriteRune(ch)
+		case 0:
+			if s.isEOF() {
+				return s.s[start-2 : s.pos.GetOffset()]
+			}
+
+			continue
+		case '\n':
+			return s.s[start-2 : s.pos.GetOffset()-1]
 		}
 	}
 }
 
 func (s *Scanner) scanMultiLineComment() string {
-	s.buf.Reset()
-	s.buf.WriteString("/*")
+	start := s.pos.GetOffset()
 	for {
 		ch, _ := s.read()
-		if ch == -1 {
-			return s.buf.String()
+		if ch == 0 && s.isEOF() {
+			return s.s[start-2 : s.pos.GetOffset()] // EOF before closing comment
 		} else if ch == '*' && s.peek() == '/' {
 			s.read()
-			s.buf.WriteString("*/")
-			return s.buf.String()
+			return s.s[start-2 : s.pos.GetOffset()] // closing comment found
 		}
-		s.buf.WriteRune(ch)
 	}
 }
 
 func (s *Scanner) scanBind() (Pos, Token, string) {
 	start, pos := s.read()
-
-	s.buf.Reset()
-	s.buf.WriteRune(start)
+	startIdx := pos.GetOffset()
 
 	// Question mark starts a numeric bind.
 	if start == '?' {
 		for isDigit(s.peek()) {
-			ch, _ := s.read()
-			s.buf.WriteRune(ch)
+			s.read()
 		}
-		return pos, BIND, s.buf.String()
+		return pos, BIND, s.s[startIdx:s.pos.GetOffset()]
 	}
 
 	// All other characters start an alphanumeric bind.
 	assert(start == ':' || start == '@' || start == '$')
 	for isUnquotedIdent(s.peek()) {
-		ch, _ := s.read()
-		s.buf.WriteRune(ch)
+		s.read()
 	}
-	return pos, BIND, s.buf.String()
+	return pos, BIND, s.s[startIdx:s.pos.GetOffset()]
 }
 
 func (s *Scanner) scanBlob() (Pos, Token, string) {
@@ -244,24 +263,24 @@ func (s *Scanner) scanBlob() (Pos, Token, string) {
 
 	// If the next character is not a quote, it's an IDENT.
 	if isUnquotedIdent(s.peek()) {
-		return s.scanUnquotedIdent(pos, string(start))
+		s.unread() // unread 'x' or 'X'
+		return s.scanUnquotedIdent()
 	} else if s.peek() != '\'' {
 		return pos, IDENT, string(start)
 	}
 	ch, _ := s.read()
 	assert(ch == '\'')
 
-	s.buf.Reset()
+	startIdx := s.pos.GetOffset()
 	for i := 0; ; i++ {
 		ch, _ := s.read()
 		if ch == '\'' {
-			return pos, BLOB, s.buf.String()
-		} else if ch == -1 {
-			return pos, ILLEGAL, string(start) + `'` + s.buf.String()
+			return pos, BLOB, s.s[startIdx : s.pos.GetOffset()-1]
+		} else if ch == 0 && s.isEOF() {
+			return pos, ILLEGAL, s.s[startIdx-2 : s.pos.GetOffset()]
 		} else if !isHex(ch) {
-			return pos, ILLEGAL, string(start) + `'` + s.buf.String() + string(ch)
+			return pos, ILLEGAL, s.s[startIdx-2 : s.pos.GetOffset()]
 		}
-		s.buf.WriteRune(ch)
 	}
 }
 
@@ -270,32 +289,27 @@ func (s *Scanner) scanNumber() (Pos, Token, string) {
 	pos := s.pos
 	tok := INTEGER
 
-	s.buf.Reset()
-
 	if s.peek() == '0' {
-		s.buf.WriteRune('0')
 		s.read()
 		if s.peek() == 'x' || s.peek() == 'X' {
 			s.read()
-			s.buf.WriteRune('x')
 			for isHex(s.peek()) {
-				ch, _ := s.read()
-				s.buf.WriteRune(ch)
+				s.read()
 			}
+
 			// TODO: error handling:
 			// if len(s.buf.String()) < 2 => invalid
 			// reason: means we scanned '0x'
 			// if len(s.buf.String()) - 2 > 16 => invalid
 			// reason: according to spec maximum of 16 significant digits)
-			return pos, tok, s.buf.String()
+			return pos, tok, s.s[pos.GetOffset():s.pos.GetOffset()]
 		}
 	}
 
 	// Read whole number if starting with a digit.
 	if isDigit(s.peek()) {
 		for isDigit(s.peek()) {
-			ch, _ := s.read()
-			s.buf.WriteRune(ch)
+			s.read()
 		}
 	}
 
@@ -303,18 +317,16 @@ func (s *Scanner) scanNumber() (Pos, Token, string) {
 	if s.peek() == '.' {
 		tok = FLOAT
 
-		ch, _ := s.read()
-		s.buf.WriteRune(ch)
+		s.read()
 
 		for isDigit(s.peek()) {
-			ch, _ := s.read()
-			s.buf.WriteRune(ch)
+			s.read()
 		}
 	}
 
 	// If we just have a dot in the buffer with no digits by this point,
 	// this can't be a number, so we can stop and return DOT
-	if s.buf.String() == "." {
+	if s.s[pos.GetOffset():s.pos.GetOffset()] == "." {
 		return pos, DOT, "."
 	}
 
@@ -322,90 +334,87 @@ func (s *Scanner) scanNumber() (Pos, Token, string) {
 	if ch := s.peek(); ch == 'e' || ch == 'E' {
 		tok = FLOAT
 
-		ch, _ := s.read()
-		s.buf.WriteRune(ch)
+		s.read()
 
 		if s.peek() == '+' || s.peek() == '-' {
-			ch, _ := s.read()
-			s.buf.WriteRune(ch)
+			s.read()
 			if !isDigit(s.peek()) {
-				return pos, ILLEGAL, s.buf.String()
+				return pos, ILLEGAL, s.s[pos.GetOffset():s.pos.GetOffset()]
 			}
 			for isDigit(s.peek()) {
-				ch, _ := s.read()
-				s.buf.WriteRune(ch)
+				s.read()
 			}
 		} else if isDigit(s.peek()) {
 			for isDigit(s.peek()) {
-				ch, _ := s.read()
-				s.buf.WriteRune(ch)
+				s.read()
 			}
 		} else {
-			return pos, ILLEGAL, s.buf.String()
+			return pos, ILLEGAL, s.s[pos.GetOffset():s.pos.GetOffset()]
 		}
 	}
 
-	return pos, tok, s.buf.String()
+	return pos, tok, s.s[pos.GetOffset():s.pos.GetOffset()]
 }
 
-func (s *Scanner) read() (rune, Pos) {
-	if s.full {
-		s.full = false
-		return s.ch, s.pos
+func (s *Scanner) read() (byte, Pos) {
+	if s.isEOF() {
+		return 0, s.pos
 	}
 
-	var err error
-	s.ch, _, err = s.r.ReadRune()
-	if err != nil {
-		s.ch = -1
-		return s.ch, s.pos
-	}
-
-	s.pos.Offset++
-	if s.ch == '\n' {
-		s.pos.Line++
-		s.pos.Column = 0
-	} else {
-		s.pos.Column++
-	}
-	return s.ch, s.pos
+	pos := s.pos
+	ch := s.peek()
+	s.prev = pos
+	s.pos = pos.Increase(ch)
+	return ch, pos
 }
 
-func (s *Scanner) peek() rune {
-	if !s.full {
-		s.read()
-		s.unread()
+func (s *Scanner) peek() byte {
+	if s.isEOF() {
+		return 0 // EOF
 	}
-	return s.ch
+
+	return s.s[s.pos.GetOffset()]
 }
 
 func (s *Scanner) unread() {
-	assert(!s.full)
-	s.full = true
+	assert(s.pos.GetOffset() > s.prev.GetOffset())
+	s.pos = s.prev
 }
 
-func isDigit(ch rune) bool {
+func (s *Scanner) isEOF() bool {
+	return s.pos.GetOffset() >= len(s.s)
+}
+
+func isDigit(ch byte) bool {
 	return ch >= '0' && ch <= '9'
 }
 
-func isAlpha(ch rune) bool {
+func isAlpha(ch byte) bool {
 	return (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z')
 }
 
-func isHex(ch rune) bool {
+func isHex(ch byte) bool {
 	return isDigit(ch) || (ch >= 'a' && ch <= 'f') || (ch >= 'A' && ch <= 'F')
 }
 
-func isUnquotedIdent(ch rune) bool {
+func isUnquotedIdent(ch byte) bool {
 	return isAlpha(ch) || isDigit(ch) || ch == '_'
 }
 
 // IsInteger returns true if s only contains digits.
 func IsInteger(s string) bool {
-	for _, ch := range s {
+	for _, ch := range stob(s) {
 		if !isDigit(ch) {
 			return false
 		}
 	}
 	return s != ""
+}
+
+func isSpace(b byte) bool {
+	switch b {
+	case '\t', '\n', '\x0C', '\r', ' ':
+		return true
+	}
+	return false
 }
